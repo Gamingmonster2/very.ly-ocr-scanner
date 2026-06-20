@@ -1,903 +1,584 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="h-full scroll-smooth">
+<html lang="ar" dir="rtl" class="h-full bg-zinc-950 text-zinc-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>very.ly — مستخرج البيانات الذكي المحلي</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Tajawal', 'Plus Jakarta Sans', 'sans-serif'],
-                    },
-                    animation: {
-                        'float-slow': 'float 8s ease-in-out infinite',
-                        'float-delayed': 'float 8s ease-in-out infinite 4s',
-                        'spin-slow': 'spin 15s linear infinite',
-                        'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
-                        'gradient-x': 'gradientX 15s ease infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-                            '50%': { transform: 'translateY(-15px) rotate(3deg)' },
-                        },
-                        pulseSubtle: {
-                            '0%, 100%': { opacity: '0.9', transform: 'scale(1)' },
-                            '50%': { opacity: '1', transform: 'scale(1.015)' },
-                        },
-                        gradientX: {
-                            '0%, 100%': { 'background-position': '0% 50%' },
-                            '50%': { 'background-position': '100% 50%' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Google Fonts: Tajawal (Arabic) & Plus Jakarta Sans (English) -->
+    <title>very.ly OCR | المستخرج الذكي للأرقام والرموز</title>
+    <!-- Google Fonts: Cairo for premium Arabic typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-
-    <!-- Tesseract.js Stable CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- Stable Tesseract.js Main Script -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 
     <style>
-        /* Iridescent & Pearl Custom Styles */
-        .pearl-bg {
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 0.8) 100%);
+        body {
+            font-family: 'Cairo', sans-serif;
         }
-        .pearl-gradient-overlay {
-            background: linear-gradient(135deg, rgba(238, 242, 255, 0.4) 0%, rgba(243, 232, 255, 0.4) 50%, rgba(253, 244, 255, 0.4) 100%);
+        /* Custom scrollbar for premium look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .pearl-glow {
-            box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.12), 0 0 40px -10px rgba(59, 130, 246, 0.12);
+        ::-webkit-scrollbar-track {
+            background: #09090b;
         }
-        .pearl-border {
-            border: 1px solid transparent;
-            background-image: linear-gradient(white, white), linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2), rgba(253, 224, 71, 0.2));
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 3px;
         }
-        /* Multilingual Visibility Control */
-        [lang="ar"] .lang-en { display: none !important; }
-        [lang="en"] .lang-ar { display: none !important; }
-        
-        /* Mirror utility for RTL/LTR layouts */
-        [lang="ar"] .rtl-mirror { transform: scaleX(-1); }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
     </style>
 </head>
-<body class="h-full bg-slate-50 text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden">
+<body class="min-h-full flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-300">
 
-    <!-- Ambient Pearlescent Background Orbs -->
-    <div class="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-tr from-purple-200/20 via-blue-200/15 to-pink-200/20 rounded-full blur-3xl -z-10 animate-float-slow"></div>
-    <div class="absolute top-1/3 right-1/4 w-[700px] h-[700px] bg-gradient-to-br from-yellow-100/15 via-teal-100/15 to-purple-100/20 rounded-full blur-3xl -z-10 animate-float-delayed"></div>
-
-    <!-- Header / Navigation -->
-    <header class="sticky top-0 z-50 w-full bg-white/75 backdrop-blur-xl border-b border-slate-100 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <!-- Logo -->
-            <a href="#" class="flex items-center gap-2.5 group">
-                <span class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-slate-950 via-purple-900 to-slate-950 bg-clip-text text-transparent">
-                    very.ly
-                </span>
-                <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 animate-pulse"></span>
-                <span class="text-xs font-semibold text-slate-400 mr-2 border-r pr-2 border-slate-200 lang-ar">مستخرج البيانات الذكي</span>
-                <span class="text-xs font-semibold text-slate-400 ml-2 border-l pl-2 border-slate-200 lang-en">Smart Data Extractor</span>
-            </a>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-4">
-                <!-- Status Pill -->
-                <div id="engine-status" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-medium shadow-sm">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span class="lang-en">Tesseract.js Engine Ready</span>
-                    <span class="lang-ar">محرك القراءة جاهز محلياً</span>
-                </div>
-
-                <!-- Language Selector -->
-                <button onclick="toggleLanguage()" class="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-sm font-medium text-slate-700 transition-all duration-200 shadow-sm">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2.5M10.5 21a9.055 9.055 0 006.144-4.144M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+    <!-- Header / Nav -->
+    <header class="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-900/20">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span id="lang-toggle-text">English</span>
-                </button>
+                </div>
+                <div>
+                    <span class="text-lg font-bold tracking-tight bg-gradient-to-l from-emerald-400 to-teal-200 bg-clip-text text-transparent">very.ly OCR</span>
+                    <span class="text-xs block text-zinc-500 font-medium -mt-1">المستخرج الذكي للأكواد والرموز</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    معالجة محلية آمنة 100%
+                </span>
             </div>
         </div>
     </header>
 
-    <!-- Main Landmark -->
-    <main id="main-content">
-
-        <!-- Component 1: Hero Section -->
-        <section class="relative pt-20 pb-16 overflow-hidden">
-            <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
-                <!-- Symmetrical Floating Assets (Iridescent Spheres & Shapes) -->
-                <div class="absolute -top-10 -left-16 w-24 h-24 bg-gradient-to-br from-pink-300/40 to-purple-400/40 rounded-full blur-sm animate-float-slow hidden md:block"></div>
-                <div class="absolute -top-10 -right-16 w-24 h-24 bg-gradient-to-bl from-blue-300/40 to-teal-400/40 rounded-full blur-sm animate-float-delayed hidden md:block"></div>
-
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold mb-6 tracking-wide border border-purple-100 shadow-sm animate-pulse-subtle">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Sidebar: Controls & Live Options (4 Cols) -->
+        <aside class="lg:col-span-4 space-y-6">
+            <!-- Instructions and Mode Card -->
+            <div class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-6 space-y-5">
+                <h2 class="text-md font-bold text-zinc-200 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span class="lang-en">100% Private Client-Side OCR Execution</span>
-                    <span class="lang-ar">معالجة وقراءة نصوص محلية آمنة 100% داخل المتصفح</span>
+                    خيارات الفرز والاستخراج
+                </h2>
+                
+                <!-- Filter Mode Selector -->
+                <div class="space-y-3">
+                    <label class="text-xs text-zinc-400 font-semibold block">نوع البيانات المستهدفة</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="setExtractionMode('all')" id="mode-all" class="mode-btn flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all bg-emerald-950/40 border-emerald-500/30 text-emerald-400">
+                            <span>جميع النصوص والأرقام</span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        </button>
+                        <button onclick="setExtractionMode('numbers')" id="mode-numbers" class="mode-btn flex items-center justify-between p-3 rounded-xl border border-zinc-800 text-zinc-400 text-sm font-medium transition-all hover:bg-zinc-800/40">
+                            <span>أرقام فقط (أكواد الشحن)</span>
+                            <span class="w-2 h-2 rounded-full bg-transparent"></span>
+                        </button>
+                        <button onclick="setExtractionMode('serials')" id="mode-serials" class="mode-btn flex items-center justify-between p-3 rounded-xl border border-zinc-800 text-zinc-400 text-sm font-medium transition-all hover:bg-zinc-800/40">
+                            <span>الأرقام التسلسلية (Alphanumeric)</span>
+                            <span class="w-2 h-2 rounded-full bg-transparent"></span>
+                        </button>
+                    </div>
                 </div>
-                
-                <h1 class="text-4xl md:text-6xl font-extrabold text-slate-950 tracking-tight leading-[1.15] mb-6">
-                    <span class="lang-en">Extract Serials & PINs <br><span class="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text text-transparent">Instantly & Privately</span></span>
-                    <span class="lang-ar">استخرج الأرقام والرموز التسلسلية <br><span class="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text text-transparent">فوراً وبخصوصية مطلقة</span></span>
-                </h1>
-                
-                <p class="text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto mb-10">
-                    <span class="lang-en">Extract codes, serial numbers, and text from prepaid cards, receipts, or documents. No servers involved. Powered entirely by local client-side AI inside your browser sandbox.</span>
-                    <span class="lang-ar">قم بقراءة واستخراج الأرقام التسلسلية، الرموز، والنصوص من بطاقات الشحن مسبقة الدفع، الفواتير، أو المستندات. لا يتم رفع أي ملفات لخوادمنا؛ تتم المعالجة بالكامل محلياً داخل متصفحك.</span>
+
+                <!-- Custom Pre-processing Toggles -->
+                <div class="pt-4 border-t border-zinc-800/80 space-y-3">
+                    <label class="text-xs text-zinc-400 font-semibold block">تحسين جودة الصورة (معالجة مسبقة)</label>
+                    
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/50 cursor-pointer hover:border-zinc-700 transition">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold text-zinc-200">تحسين التباين التلقائي</span>
+                            <span class="text-[10px] text-zinc-500">يزيد من وضوح الأرقام الباهتة</span>
+                        </div>
+                        <input type="checkbox" id="enhance-contrast" checked class="w-4 h-4 accent-emerald-500 rounded bg-zinc-900 border-zinc-700">
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/50 cursor-pointer hover:border-zinc-700 transition">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold text-zinc-200">تحويل أحادي اللون (Binarization)</span>
+                            <span class="text-[10px] text-zinc-500">إزالة الخلفيات الملونة والتشويش</span>
+                        </div>
+                        <input type="checkbox" id="binarize-img" checked class="w-4 h-4 accent-emerald-500 rounded bg-zinc-900 border-zinc-700">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Security Check Card -->
+            <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-2xl p-5 text-xs text-zinc-400 space-y-3">
+                <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    خصوصية مطلقة وأمان تام
+                </div>
+                <p class="leading-relaxed">
+                    تتم معالجة جميع الصور والمستندات محلياً بالكامل داخل متصفحك الشخصي. لا يتم إرسال أي بيانات أو صور إلى أي خوادم خارجية على الإطلاق. يمكنك فصل الإنترنت واستخدام الأداة بكفاءة كاملة.
                 </p>
-
-                <!-- Dual App Download Pill Buttons -->
-                <div class="flex flex-wrap justify-center gap-4">
-                    <a href="#workspace-anchor" class="px-8 py-4 bg-slate-950 hover:bg-slate-900 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-[1.02] flex items-center gap-3">
-                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 114 0v2m-4 0h4m-4 0H5m12 0h2" />
-                        </svg>
-                        <span class="lang-en">Launch Engine Tool</span>
-                        <span class="lang-ar">تشغيل أداة الاستخراج</span>
-                    </a>
-                    <a href="#features-anchor" class="px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-full border border-slate-200 transition-all duration-300 shadow-sm flex items-center gap-2">
-                        <span class="lang-en">How it Works</span>
-                        <span class="lang-ar">كيف تعمل الأداة</span>
-                    </a>
-                </div>
             </div>
-        </section>
+        </aside>
 
-        <!-- Interactive OCR Workspace Card -->
-        <section id="workspace-anchor" class="py-12 bg-white/40 backdrop-blur-md border-y border-slate-100">
-            <div class="max-w-6xl mx-auto px-6">
-                <div class="pearl-border rounded-3xl p-8 md:p-12 bg-white/95 shadow-xl pearl-glow">
-                    
-                    <!-- Drag & Drop Upload Container -->
-                    <div id="drop-zone" class="relative group cursor-pointer bg-slate-50/50 border-2 border-dashed border-slate-200 hover:border-purple-400 rounded-2xl p-10 md:p-14 text-center transition-all duration-300 shadow-inner">
-                        <input type="file" id="file-upload" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                        
-                        <div class="relative z-10 pointer-events-none flex flex-col items-center">
-                            <!-- Pearlescent Circle with Upload Icon -->
-                            <div class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-50 transition-all duration-300 border border-slate-100 shadow-sm">
-                                <svg class="w-8 h-8 text-slate-500 group-hover:text-purple-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a1 1 0 011.414 0L16 19m-2-2l1.586-1.586a1 1 0 011.414 0L21 20M12 4v12m0-12L8 8m4-4l4 4" />
-                                </svg>
-                            </div>
-                            
-                            <h3 class="text-lg font-bold text-slate-800 mb-2">
-                                <span class="lang-en">Drag & drop your prepaid card/document here</span>
-                                <span class="lang-ar">اسحب وأفلت بطاقة الشحن أو المستند هنا</span>
-                            </h3>
-                            <p class="text-sm text-slate-500 mb-1">
-                                <span class="lang-en">or click to browse from device</span>
-                                <span class="lang-ar">أو انقر لتصفح ملفات جهازك</span>
-                            </p>
-                            <p class="text-xs text-slate-400">
-                                <span class="lang-en">Supports PNG, JPEG, WebP up to 15MB</span>
-                                <span class="lang-ar">يدعم صيغ PNG, JPEG, WebP حتى 15 ميجابايت</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Interactive Processing Status -->
-                    <div id="processing-loader" class="hidden mt-8 max-w-xl mx-auto bg-white border border-slate-100 p-6 rounded-2xl shadow-md">
-                        <div class="flex items-center gap-4">
-                            <div class="relative w-12 h-12 flex-shrink-0">
-                                <div class="absolute inset-0 rounded-full border-4 border-purple-100"></div>
-                                <div class="absolute inset-0 rounded-full border-4 border-t-purple-600 animate-spin"></div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-bold text-slate-900 text-sm truncate">
-                                    <span class="lang-en" id="status-title-en">Initializing OCR Engine...</span>
-                                    <span class="lang-ar" id="status-title-ar">جاري تهيئة محرك القراءة...</span>
-                                </h4>
-                                <!-- Progress Bar Wrapper -->
-                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
-                                    <div id="progress-bar" class="bg-gradient-to-r from-purple-600 to-pink-500 h-full w-0 transition-all duration-200"></div>
-                                </div>
-                                <p class="text-[11px] text-slate-500 mt-1 font-mono" id="status-percentage">0%</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Comparison Preview Section (Side by Side) -->
-                    <div id="preview-section" class="hidden mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Original Image with Bounding Boxes Canvas -->
-                        <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-                            <div class="flex items-center justify-between mb-3 px-1">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                                    <span class="lang-en">Detected Text Regions</span>
-                                    <span class="lang-ar">مناطق النصوص المكتشفة</span>
-                                </span>
-                            </div>
-                            <!-- Canvas Wrapper to render image and bounding boxes -->
-                            <div class="relative flex-1 min-h-[350px] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
-                                <canvas id="ocr-canvas" class="max-w-full max-h-[450px] object-contain"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Processed Extracted Text Box -->
-                        <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-                            <div class="flex items-center justify-between mb-3 px-1">
-                                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span class="lang-en">Extracted Output</span>
-                                    <span class="lang-ar">البيانات المستخرجة</span>
-                                </span>
-                                
-                                <!-- Copy Button -->
-                                <button id="copy-text-btn" onclick="copyExtractedText()" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                    </svg>
-                                    <span class="lang-en">Copy Text</span>
-                                    <span class="lang-ar">نسخ النص</span>
-                                </button>
-                            </div>
-                            <!-- Textarea output -->
-                            <div class="flex-1 min-h-[350px] relative rounded-xl overflow-hidden border border-slate-200 bg-slate-950 p-5 font-mono text-xs leading-relaxed">
-                                <textarea id="extracted-text-area" readonly class="w-full h-full bg-transparent border-none outline-none resize-none text-emerald-400 focus:ring-0 selection:bg-slate-800" dir="ltr" placeholder="No text extracted yet..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- Component 2: Overlapping Isometric Mockup Section -->
-        <section id="features-anchor" class="py-24 overflow-hidden relative">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                    
-                    <!-- Text Column -->
-                    <div class="lg:col-span-5 relative z-10 text-right">
-                        <span class="text-xs font-bold uppercase tracking-widest text-purple-600 bg-purple-50 px-3.5 py-1.5 rounded-full border border-purple-100">
-                            <span class="lang-en">Cutting-Edge Architecture</span>
-                            <span class="lang-ar">بنية تقنية متطورة</span>
-                        </span>
-                        <h2 class="text-3xl md:text-4xl font-extrabold text-slate-950 tracking-tight mt-6 mb-6">
-                            <span class="lang-en">Designed for high precision numeric extraction</span>
-                            <span class="lang-ar">مصمم خصيصاً لاستخراج الأرقام بدقة متناهية</span>
-                        </h2>
-                        <p class="text-slate-600 leading-relaxed mb-8">
-                            <span class="lang-en">Our client-side processing isolates sequences of digits, filtering out card background noise to deliver pin-sharp alphanumeric accuracy. Perfect for telecom vouchers, utility receipts, and corporate document audits.</span>
-                            <span class="lang-ar">تقوم خوارزميات المعالجة المحلية لدينا بعزل سلاسل الأرقام المكتشفة وتصفية التشويش البصري في خلفية البطاقات لتقديم دقة متناهية. مثالي لبطاقات الاتصال، الفواتير، والتدقيق المالي للمستندات.</span>
-                        </p>
-                        <div class="space-y-4">
-                            <div class="flex items-start gap-3 justify-start">
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-slate-900 text-sm">
-                                        <span class="lang-en">Adaptive Local Thresholding</span>
-                                        <span class="lang-ar">العزل التكيفي المحلي للصورة</span>
-                                    </h4>
-                                    <p class="text-xs text-slate-500 mt-1">
-                                        <span class="lang-en">Enhances low-contrast numbers and shadows on glossy cards automatically.</span>
-                                        <span class="lang-ar">يعزز تلقائياً وضوح الأرقام ذات التباين المنخفض والظلال على البطاقات اللامعة.</span>
-                                    </p>
-                                </div>
-                                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Isometric Mockup Column -->
-                    <div class="lg:col-span-7 relative flex justify-center items-center">
-                        <!-- Geometric Pastel Backdrops -->
-                        <div class="absolute w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-purple-200/40 via-blue-200/40 to-pink-200/40 blur-2xl -z-10"></div>
-                        
-                        <!-- 3D Overlapping Mockups -->
-                        <div class="relative w-full max-w-md h-[400px] flex items-center justify-center">
-                            
-                            <!-- Bottom/Back Card (Simulated Card Scan) -->
-                            <div class="absolute w-72 h-44 bg-white/90 border border-slate-200/80 rounded-2xl p-5 shadow-2xl transform -rotate-12 -translate-x-12 translate-y-6 backdrop-blur-md transition-all duration-500 hover:rotate-0 hover:translate-x-0 hover:translate-y-0 z-10">
-                                <div class="w-full h-full flex flex-col justify-between">
-                                    <div class="flex justify-between items-start">
-                                        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-extrabold text-xs">V</div>
-                                        <span class="text-[10px] font-mono text-slate-400">PREPAID VOUCHER</span>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <div class="h-1.5 w-3/4 bg-slate-200 rounded"></div>
-                                        <div class="h-3 w-full bg-slate-800 rounded flex items-center justify-center text-[10px] font-mono text-emerald-400 tracking-widest font-bold">1029 3847 5019 2843</div>
-                                        <div class="h-1.5 w-1/2 bg-slate-200 rounded"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Top/Front Card (Simulated Extracted Overlay) -->
-                            <div class="absolute w-72 h-44 bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl transform rotate-6 translate-x-12 -translate-y-6 transition-all duration-500 hover:rotate-0 hover:translate-x-0 hover:translate-y-0 z-20">
-                                <div class="w-full h-full flex flex-col justify-between">
-                                    <div class="flex justify-between items-start">
-                                        <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">LIVE OCR PARSING</span>
-                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                    </div>
-                                    <div class="space-y-3 font-mono">
-                                        <div>
-                                            <span class="text-[9px] text-slate-500 block">SERIAL NO:</span>
-                                            <span class="text-xs text-slate-100 font-bold">SN-92837491-X</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-[9px] text-slate-500 block">PIN CODE:</span>
-                                            <span class="text-xs text-emerald-400 font-bold tracking-wider">8294-1029-3847-5019</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- Component 3: Alternating Feature Rows -->
-        <section class="py-24 bg-slate-50">
-            <div class="max-w-7xl mx-auto px-6 space-y-32">
-                
-                <!-- Row A: Left-aligned minimalist wireframe device outline resting over technical radial lines -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                    <!-- Visual Column -->
-                    <div class="lg:col-span-6 relative flex justify-center">
-                        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent -z-10"></div>
-                        <!-- High-Tech Radial Background Vector -->
-                        <div class="absolute w-96 h-96 border border-slate-200/50 rounded-full flex items-center justify-center animate-spin-slow">
-                            <div class="w-80 h-80 border border-dashed border-slate-200/50 rounded-full flex items-center justify-center">
-                                <div class="w-64 h-64 border border-slate-200/50 rounded-full"></div>
-                            </div>
-                        </div>
-                        <!-- Minimalist Wireframe Device Outline -->
-                        <div class="relative w-64 h-96 bg-white border-2 border-slate-200 rounded-[3rem] p-3 shadow-xl">
-                            <div class="w-full h-full border border-slate-100 rounded-[2.5rem] bg-slate-50/50 p-4 flex flex-col justify-between relative overflow-hidden">
-                                <div class="w-20 h-4 bg-slate-200 rounded-full mx-auto"></div>
-                                <div class="space-y-4 my-auto">
-                                    <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mx-auto text-purple-600">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11V7a2 2 0 00-2-2H6a2 2 0 00-2 2v2c0 4.135 3.024 7.53 7 8.012V21m0 0h4m-4 0a5.002 5.002 0 01-4.885-4.044M12 11a9 9 0 018.3-8.567M3 12a9 9 0 0118 0M9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
-                                        </svg>
-                                    </div>
-                                    <div class="space-y-2 text-center">
-                                        <div class="h-2 w-24 bg-slate-300 rounded mx-auto"></div>
-                                        <div class="h-2 w-16 bg-slate-200 rounded mx-auto"></div>
-                                    </div>
-                                </div>
-                                <div class="w-10 h-10 rounded-full bg-slate-200 mx-auto"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Text Column -->
-                    <div class="lg:col-span-6 text-right">
-                        <span class="text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
-                            <span class="lang-en">Military-Grade Privacy</span>
-                            <span class="lang-ar">خصوصية من الفئة العسكرية</span>
-                        </span>
-                        <h3 class="text-2xl md:text-3xl font-extrabold text-slate-950 mt-6 mb-6">
-                            <span class="lang-en">Your documents never leave your local environment</span>
-                            <span class="lang-ar">مستنداتك لا تغادر بيئتك المحلية أبداً</span>
-                        </h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            <span class="lang-en">Unlike cloud-based OCR services that store and process your sensitive documents on external servers, very.ly runs entirely inside your browser sandbox. Your data remains fully protected under local device memory.</span>
-                            <span class="lang-ar">على عكس خدمات القراءة السحابية التي تقوم بتخزين ومعالجة مستنداتك الحساسة على خوادم خارجية، تعمل أداة very.ly بالكامل داخل بيئة متصفحك المعزولة. تبقى بياناتك محمية بالكامل داخل ذاكرة جهازك المحلي.</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Row B: Right-aligned feature summary paired with left-aligned circular cropped interface previews -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                    <!-- Text Column -->
-                    <div class="lg:col-span-6 lg:order-2 text-right">
-                        <span class="text-xs font-bold uppercase tracking-widest text-pink-600 bg-pink-50 px-3.5 py-1.5 rounded-full border border-pink-100">
-                            <span class="lang-en">Real-Time Data Formatting</span>
-                            <span class="lang-ar">تنسيق البيانات الفوري</span>
-                        </span>
-                        <h3 class="text-2xl md:text-3xl font-extrabold text-slate-950 mt-6 mb-6">
-                            <span class="lang-en">Structured financial charts and numeric patterns</span>
-                            <span class="lang-ar">مخططات مالية منسقة وأنماط رقمية دقيقة</span>
-                        </h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            <span class="lang-en">Easily parse and structure raw text blobs into actionable tables, JSON objects, or pure text files. Copy directly to your clipboard or export with a single click.</span>
-                            <span class="lang-ar">قم بتحليل وتنسيق النصوص الخام المستخرجة بسهولة وتحويلها إلى جداول، ملفات JSON، أو نصوص نقية. انسخ مباشرة لحافظتك أو قم بالتصدير بنقرة واحدة.</span>
-                        </p>
-                    </div>
-                    <!-- Visual Column (Circular Cropped Interface Previews with SVG Charts) -->
-                    <div class="lg:col-span-6 lg:order-1 flex justify-center">
-                        <div class="relative w-80 h-80 rounded-full bg-white border border-slate-200 shadow-xl overflow-hidden flex items-center justify-center">
-                            <!-- Circular Graphic Content -->
-                            <div class="absolute inset-0 bg-slate-50/50 flex flex-col justify-between p-8">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[10px] font-bold text-slate-400">EXTRACTION VOLUMES</span>
-                                    <span class="text-xs font-bold text-emerald-500">+42.8%</span>
-                                </div>
-                                <!-- Clean SVG Sparkline/Chart -->
-                                <svg class="w-full h-24 text-purple-500" viewBox="0 0 100 30" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3" />
-                                            <stop offset="100%" stop-color="#a855f7" stop-opacity="0" />
-                                        </linearGradient>
-                                    </defs>
-                                    <path d="M0,25 Q15,5 30,18 T60,8 T90,20 T100,10 L100,30 L0,30 Z" fill="url(#chart-grad)" />
-                                    <path d="M0,25 Q15,5 30,18 T60,8 T90,20 T100,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                                </svg>
-                                <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                                    <span>JAN</span>
-                                    <span>FEB</span>
-                                    <span>MAR</span>
-                                    <span>APR</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Component 4: Premium Asset Matrix (Market Grid) -->
-        <section class="py-24 bg-white">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center max-w-2xl mx-auto mb-16">
-                    <h2 class="text-3xl font-extrabold text-slate-950 tracking-tight mb-4">
-                        <span class="lang-en">Supported Formats & Utility Matrix</span>
-                        <span class="lang-ar">الأنماط المدعومة ومصفوفة الأدوات</span>
-                    </h2>
-                    <p class="text-sm text-slate-500">
-                        <span class="lang-en">Real-time processing parameters optimized for precise local extraction.</span>
-                        <span class="lang-ar">مؤشرات ومعايير معالجة فورية محسنة للاستخراج المحلي الدقيق.</span>
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    
-                    <!-- Card 1 -->
-                    <div class="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between h-64">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mb-4">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                            </div>
-                            <h4 class="font-bold text-slate-900 text-sm">
-                                <span class="lang-en">Telecom Vouchers</span>
-                                <span class="lang-ar">بطاقات الشحن والاتصال</span>
-                            </h4>
-                            <p class="text-xs text-slate-500 mt-2">
-                                <span class="lang-en">Sawa, Mobily, Zain, and international telecom card PINs.</span>
-                                <span class="lang-ar">بطاقات سوا، موبايلي، زين، ورموز الشحن الدولية المختلفة.</span>
-                            </p>
-                        </div>
-                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                            <span class="text-[10px] font-bold text-emerald-600">99.8% ACCURACY</span>
-                            <!-- Ultra-thin sparkline trend vector -->
-                            <svg class="w-16 h-6 text-emerald-500" viewBox="0 0 50 20">
-                                <path d="M0,15 L10,12 L20,18 L30,5 L40,8 L50,2" fill="none" stroke="currentColor" stroke-width="1.5" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Card 2 -->
-                    <div class="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between h-64">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                            <h4 class="font-bold text-slate-900 text-sm">
-                                <span class="lang-en">Invoices & Receipts</span>
-                                <span class="lang-ar">الفواتير وإيصالات الدفع</span>
-                            </h4>
-                            <p class="text-xs text-slate-500 mt-2">
-                                <span class="lang-en">Tax IDs, total values, and dates from standard paper invoices.</span>
-                                <span class="lang-ar">الأرقام الضريبية، القيمة الإجمالية، والتواريخ من الفواتير الورقية.</span>
-                            </p>
-                        </div>
-                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                            <span class="text-[10px] font-bold text-emerald-600">98.5% ACCURACY</span>
-                            <svg class="w-16 h-6 text-emerald-500" viewBox="0 0 50 20">
-                                <path d="M0,18 L10,14 L20,10 L30,12 L40,4 L50,2" fill="none" stroke="currentColor" stroke-width="1.5" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 -->
-                    <div class="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between h-64">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 mb-4">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                                </svg>
-                            </div>
-                            <h4 class="font-bold text-slate-900 text-sm">
-                                <span class="lang-en">Alphanumeric Serials</span>
-                                <span class="lang-ar">الأرقام التسلسلية المركبة</span>
-                            </h4>
-                            <p class="text-xs text-slate-500 mt-2">
-                                <span class="lang-en">Hardware codes, database keys, and product serial blocks.</span>
-                                <span class="lang-ar">أكواد الأجهزة، مفاتيح قواعد البيانات، ومصفوفات الأرقام التسلسلية.</span>
-                            </p>
-                        </div>
-                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                            <span class="text-[10px] font-bold text-emerald-600">99.1% ACCURACY</span>
-                            <svg class="w-16 h-6 text-emerald-500" viewBox="0 0 50 20">
-                                <path d="M0,12 L10,8 L20,15 L30,5 L40,12 L50,2" fill="none" stroke="currentColor" stroke-width="1.5" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Card 4 -->
-                    <div class="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between h-64">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 mb-4">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                </svg>
-                            </div>
-                            <h4 class="font-bold text-slate-900 text-sm">
-                                <span class="lang-en">Activation Codes</span>
-                                <span class="lang-ar">رموز التفعيل والتحقق</span>
-                            </h4>
-                            <p class="text-xs text-slate-500 mt-2">
-                                <span class="lang-en">Software licensing keys, dynamic PIN blocks, and activation strings.</span>
-                                <span class="lang-ar">مفاتيح ترخيص البرمجيات، ورموز التفعيل الديناميكية المختلفة.</span>
-                            </p>
-                        </div>
-                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                            <span class="text-[10px] font-bold text-emerald-600">99.4% ACCURACY</span>
-                            <svg class="w-16 h-6 text-emerald-500" viewBox="0 0 50 20">
-                                <path d="M0,15 L10,10 L20,12 L30,8 L40,5 L50,2" fill="none" stroke="currentColor" stroke-width="1.5" />
-                            </svg>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- Component 5: 3D Product Showcase Divider -->
-        <section class="relative py-20 bg-slate-950 overflow-hidden">
-            <!-- Background Iridescent Glow -->
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/40 via-transparent to-transparent -z-10"></div>
+        <!-- Right Main Workspace: Upload, Preview, Results (8 Cols) -->
+        <section class="lg:col-span-8 space-y-6">
             
-            <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
-                <!-- Sleek hardware card mockup with iridescent metallic/reflective finish -->
-                <div class="relative w-72 h-44 mx-auto mb-10 rounded-2xl bg-gradient-to-tr from-purple-500 via-pink-500 to-blue-500 p-[1px] shadow-[0_0_50px_rgba(168,85,247,0.3)] animate-float-slow">
-                    <div class="w-full h-full bg-slate-950/90 rounded-2xl p-5 flex flex-col justify-between text-left">
-                        <div class="flex justify-between items-start">
-                            <span class="text-xs font-bold text-white tracking-widest font-mono">very.ly SECURE-TOKEN</span>
-                            <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                                <div class="w-4 h-4 rounded-full bg-gradient-to-tr from-purple-400 to-pink-500"></div>
-                            </div>
+            <!-- Upload Area & Image Preview Panel -->
+            <div class="bg-zinc-900/50 border border-zinc-800/80 rounded-3xl p-6 space-y-6">
+                
+                <!-- Drag and drop zone -->
+                <div id="drop-zone" class="border-2 border-dashed border-zinc-700 hover:border-emerald-500/50 bg-zinc-950/40 rounded-2xl p-8 text-center cursor-pointer transition-all relative overflow-hidden group">
+                    <input type="file" id="file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                    
+                    <div class="space-y-4 relative z-0 pointer-events-none">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 group-hover:scale-105 transition-transform">
+                            <svg class="w-8 h-8 text-zinc-400 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                         </div>
-                        <div>
-                            <span class="text-[10px] text-slate-500 block font-mono">HARDWARE DECRYPTOR</span>
-                            <span class="text-sm text-slate-200 font-bold font-mono tracking-widest">**** **** **** 2024</span>
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-zinc-200">اسحب صورة كرت الشحن أو المستند هنا</p>
+                            <p class="text-xs text-zinc-500">أو اضغط لتصفح الملفات مباشرة من جهازك</p>
                         </div>
+                        <p class="text-[10px] text-zinc-600">يدعم صيغ PNG, JPG, WebP (تتم المعالجة فورياً)</p>
                     </div>
                 </div>
 
-                <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-4">
-                    <span class="lang-en">Empowering Next-Gen Security & OCR</span>
-                    <span class="lang-ar">تمكين الجيل القادم من الأمان وقراءة النصوص</span>
-                </h2>
-                <p class="text-sm text-slate-400 max-w-xl mx-auto">
-                    <span class="lang-en">Designed for high-tier financial operations, very.ly bridges client-side WebAssembly rendering with zero-trust privacy models.</span>
-                    <span class="lang-ar">تم تصميم very.ly للعمليات المالية عالية المستوى، حيث يجمع بين العرض المحلي للبيانات ومعايير الخصوصية الصارمة.</span>
-                </p>
-            </div>
-        </section>
+                <!-- Live Preview Block (Hidden initially) -->
+                <div id="preview-container" class="hidden space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-zinc-400">معاينة الصورة المدخلة:</span>
+                        <button onclick="clearImage()" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            إلغاء الصورة
+                        </button>
+                    </div>
+                    <div class="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex justify-center items-center p-4 max-h-80">
+                        <img id="image-preview" src="" alt="Preview" class="max-h-72 object-contain rounded-lg shadow-lg">
+                        <!-- Canvas overlay for debug/enhanced view if needed -->
+                        <canvas id="processing-canvas" class="hidden"></canvas>
+                    </div>
+                </div>
 
-        <!-- Component 6: Conversional Call-To-Action (CTA) -->
-        <section class="py-24 bg-white">
-            <div class="max-w-4xl mx-auto px-6 text-center">
-                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-950 tracking-tight mb-4">
-                    <span class="lang-en">Ready to secure your document workflow?</span>
-                    <span class="lang-ar">هل أنت جاهز لتأمين سير عمل مستنداتك؟</span>
-                </h2>
-                <p class="text-slate-600 mb-8 max-w-xl mx-auto">
-                    <span class="lang-en">Join very.ly for early enterprise access, custom API deployments, and high-volume offline processing options.</span>
-                    <span class="lang-ar">انضم إلى very.ly للحصول على وصول مبكر للشركات، ونشر واجهات برمجة التطبيقات المخصصة، وخيارات المعالجة غير المتصلة بالإنترنت.</span>
-                </p>
-                
-                <!-- Centred "Join the Community" Interface -->
-                <form onsubmit="event.preventDefault(); alert('Thank you for joining!');" class="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
-                    <input type="email" required placeholder="name@company.com" class="flex-1 px-5 py-3 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 text-sm bg-slate-50/50" dir="ltr">
-                    <button type="submit" class="px-6 py-3 rounded-full bg-slate-950 hover:bg-slate-900 text-white font-semibold text-sm transition-all duration-200 shadow-md transform active:scale-95">
-                        <span class="lang-en">Get Started</span>
-                        <span class="lang-ar">ابدأ الآن</span>
+                <!-- Global Progress Text & Bar Indicator -->
+                <div id="progress-panel" class="hidden space-y-3 p-4 rounded-xl bg-zinc-950/80 border border-zinc-800">
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="progress-status" class="text-emerald-400 font-medium">جاري تهيئة النظام...</span>
+                        <span id="progress-percent" class="text-zinc-500">0%</span>
+                    </div>
+                    <div class="w-full h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+                        <div id="progress-bar" class="h-full bg-gradient-to-l from-emerald-500 to-teal-400 w-0 transition-all duration-200"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Extraction Output Panel -->
+            <div class="bg-zinc-900/50 border border-zinc-800/80 rounded-3xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <h3 class="text-sm font-bold text-zinc-200">النتائج والرموز المستخرجة</h3>
+                    </div>
+                    
+                    <!-- Copy Button -->
+                    <button id="copy-btn" onclick="copyResultText()" disabled class="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        <span id="copy-btn-text">نسخ النص المستخرج</span>
                     </button>
-                </form>
-            </div>
-        </section>
+                </div>
 
+                <!-- Final Extracted Text Box -->
+                <div class="relative">
+                    <textarea id="output-text" readonly placeholder="ستظهر الرموز والأرقام المستخرجة هنا تلقائياً بمجرد رفع الصورة..." class="w-full h-48 bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none focus:border-emerald-500/50 transition resize-none font-mono tracking-wider leading-relaxed text-right dir-ltr"></textarea>
+                    
+                    <!-- Quick stats Overlay -->
+                    <div class="absolute bottom-3 left-3 flex items-center gap-3 text-[10px] text-zinc-500">
+                        <span id="char-count">حروف: 0</span>
+                        <span id="num-count">أرقام: 0</span>
+                    </div>
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="copy-toast" class="opacity-0 transition-opacity duration-300 text-xs text-center text-emerald-400 font-medium">
+                    تم نسخ النص المستخرج بنجاح إلى الحافظة!
+                </div>
+            </div>
+
+            <!-- Scan History / Log -->
+            <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-bold text-zinc-400">سجل عمليات المسح السابقة لهذه الجلسة</h4>
+                    <button onclick="clearHistory()" class="text-[10px] text-zinc-500 hover:text-rose-400 transition">مسح السجل</button>
+                </div>
+                <div id="history-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    <p class="text-xs text-zinc-600 italic text-center py-2">لا توجد عمليات مسح سابقة بعد.</p>
+                </div>
+            </div>
+
+        </section>
     </main>
 
-    <!-- Component 7: Deep Corporate Footer -->
-    <footer class="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-                
-                <!-- Column 1: Brand -->
-                <div class="space-y-4">
-                    <span class="text-2xl font-extrabold text-white">very.ly</span>
-                    <p class="text-xs text-slate-400 leading-relaxed">
-                        <span class="lang-en">High-performance client-side utilities optimized for zero-data retention operations.</span>
-                        <span class="lang-ar">أدوات معالجة محلية عالية الأداء مصممة لعدم الاحتفاظ بالبيانات لضمان الخصوصية المطلقة.</span>
-                    </p>
-                </div>
-
-                <!-- Column 2: Links (Product) -->
-                <div class="space-y-3">
-                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">
-                        <span class="lang-en">Product</span>
-                        <span class="lang-ar">المنتج</span>
-                    </h5>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#workspace-anchor" class="hover:text-white transition-colors">OCR Tool</a></li>
-                        <li><a href="#features-anchor" class="hover:text-white transition-colors">Architecture</a></li>
-                    </ul>
-                </div>
-
-                <!-- Column 3: Links (Security) -->
-                <div class="space-y-3">
-                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">
-                        <span class="lang-en">Security</span>
-                        <span class="lang-ar">الأمان</span>
-                    </h5>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#" class="hover:text-white transition-colors">Zero-Trust Compliance</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Local Sandbox Execution</a></li>
-                    </ul>
-                </div>
-
-                <!-- Column 4: Links (Corporate) -->
-                <div class="space-y-3">
-                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">
-                        <span class="lang-en">Corporate</span>
-                        <span class="lang-ar">الشركة</span>
-                    </h5>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#" class="hover:text-white transition-colors">Enterprise Access</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
-                    </ul>
-                </div>
-
-            </div>
-
-            <!-- Bottom Row -->
-            <div class="pt-8 border-t border-slate-900 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-                <div class="flex items-center gap-2">
-                    <span>&copy; <span id="current-year"></span> very.ly.</span>
-                    <span class="lang-en">All rights reserved.</span>
-                    <span class="lang-ar">جميع الحقوق محفوظة.</span>
-                </div>
-                <!-- Privacy Notice Badge -->
-                <div class="px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-400">
-                    <span class="lang-en">🔒 Zero-Server Footprint Certified</span>
-                    <span class="lang-ar">🔒 معتمد كلياً كأداة معالجة محلية خالية من السيرفرات</span>
-                </div>
-            </div>
+    <!-- Footer -->
+    <footer class="border-t border-zinc-900 bg-zinc-950 py-6 text-center text-xs text-zinc-600">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© <span id="current-year"></span> very.ly OCR. جميع الحقوق محفوظة.</p>
+            <p class="flex items-center gap-1">
+                تم التطوير بأعلى معايير الأمان والسرعة لتجربة مستخدم متميزة.
+            </p>
         </div>
     </footer>
 
-    <!-- JavaScript logic for UI, Language Toggle, and Tesseract OCR -->
+    <!-- Core App Logic -->
     <script>
-        // Set Year
-        document.getElementById('current-year').innerText = new Date().getFullYear();
+        // Set Year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
 
-        // Language Switching Logic
-        function toggleLanguage() {
-            const html = document.documentElement;
-            const currentLang = html.getAttribute('lang');
-            const toggleText = document.getElementById('lang-toggle-text');
+        // State Management
+        let extractionMode = 'all'; // 'all' | 'numbers' | 'serials'
+        let cachedWorker = null;
+        let isProcessing = false;
+        let currentImageSrc = null;
+        let scanHistory = [];
 
-            if (currentLang === 'en') {
-                html.setAttribute('lang', 'ar');
-                html.setAttribute('dir', 'rtl');
-                toggleText.innerText = 'English';
-            } else {
-                html.setAttribute('lang', 'en');
-                html.setAttribute('dir', 'ltr');
-                toggleText.innerText = 'العربية';
-            }
-        }
-
-        // Drag & Drop Visual Handlers
+        // Elements
         const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-upload');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const processingCanvas = document.getElementById('processing-canvas');
+        const progressPanel = document.getElementById('progress-panel');
+        const progressStatus = document.getElementById('progress-status');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressBar = document.getElementById('progress-bar');
+        const outputText = document.getElementById('output-text');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyBtnText = document.getElementById('copy-btn-text');
+        const copyToast = document.getElementById('copy-toast');
+        const charCount = document.getElementById('char-count');
+        const numCount = document.getElementById('num-count');
+        const historyList = document.getElementById('history-list');
 
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-purple-500', 'scale-[1.01]');
+        // Drag and drop event listeners
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-emerald-500', 'bg-emerald-950/10');
+            }, false);
         });
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-purple-500', 'scale-[1.01]');
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/10');
+            }, false);
         });
 
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-purple-500', 'scale-[1.01]');
-            if (e.dataTransfer.files.length) {
-                fileInput.files = e.dataTransfer.files;
-                fileInput.dispatchEvent(new Event('change'));
-            }
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) handleFile(files[0]);
         });
 
-        // Tesseract.js Processing Logic
-        fileInput.addEventListener('change', async (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                
-                // Show Loader and hide previous previews
-                document.getElementById('processing-loader').classList.remove('hidden');
-                document.getElementById('preview-section').classList.add('hidden');
-                
-                // Reset progress bar
-                updateProgressBar(0, "Starting process...");
-
-                // Read file to draw on canvas
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        // Setup canvas preview
-                        const canvas = document.getElementById('ocr-canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        
-                        // Start OCR
-                        runLocalOCR(file, img);
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
-        // Update Progress Bar UI
-        function updateProgressBar(percent, statusText) {
-            const progressBar = document.getElementById('progress-bar');
-            const percentLabel = document.getElementById('status-percentage');
-            const statusEn = document.getElementById('status-title-en');
-            const statusAr = document.getElementById('status-title-ar');
+        // Set extraction mode active UI
+        function setExtractionMode(mode) {
+            extractionMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-950/40', 'border-emerald-500/30', 'text-emerald-400');
+                btn.classList.add('border-zinc-800', 'text-zinc-400');
+                btn.querySelector('span:last-child').classList.replace('bg-emerald-400', 'bg-transparent');
+            });
 
-            progressBar.style.width = `${percent}%`;
-            percentLabel.innerText = `${Math.round(percent)}%`;
+            const activeBtn = document.getElementById(`mode-${mode}`);
+            activeBtn.classList.add('bg-emerald-950/40', 'border-emerald-500/30', 'text-emerald-400');
+            activeBtn.classList.remove('border-zinc-800', 'text-zinc-400');
+            activeBtn.querySelector('span:last-child').classList.replace('bg-transparent', 'bg-emerald-400');
 
-            if (statusText) {
-                statusEn.innerText = `Analyzing: ${statusText}`;
-                statusAr.innerText = `جاري المعالجة: ${statusText}`;
+            // If an image is already loaded, re-process with new filters immediately
+            if (currentImageSrc && !isProcessing) {
+                processOCR(currentImageSrc);
             }
         }
 
-        // Run Tesseract OCR Process
-        async function runLocalOCR(file, imgElement) {
-            try {
-                // Initialize Tesseract Worker with eng+ara languages
-                const worker = await Tesseract.createWorker('eng+ara', 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            updateProgressBar(m.progress * 100, `Recognizing Text (${Math.round(m.progress * 100)}%)`);
-                        } else {
-                            updateProgressBar(30, m.status);
-                        }
-                    }
-                });
+        // File handler
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('يرجى اختيار ملف صورة صالح فقط.');
+                return;
+            }
 
-                // Perform recognition
-                const ret = await worker.recognize(file);
-                const text = ret.data.text;
-                const words = ret.data.words;
-
-                // Draw bounding boxes on canvas
-                const canvas = document.getElementById('ocr-canvas');
-                const ctx = canvas.getContext('2d');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImageSrc = e.target.result;
+                imagePreview.src = currentImageSrc;
+                previewContainer.classList.remove('hidden');
                 
-                ctx.strokeStyle = 'rgba(147, 51, 234, 0.85)'; // Purple-600
-                ctx.lineWidth = Math.max(3, canvas.width / 250);
-                ctx.fillStyle = 'rgba(147, 51, 234, 0.15)';
+                // Trigger OCR processing
+                processOCR(currentImageSrc);
+            };
+            reader.readAsDataURL(file);
+        }
 
-                words.forEach(word => {
-                    if (word.confidence > 50) {
-                        const { x0, y0, x1, y1 } = word.bbox;
-                        ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-                        ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+        // Clear loaded image state
+        function clearImage() {
+            currentImageSrc = null;
+            imagePreview.src = '';
+            previewContainer.classList.add('hidden');
+            progressPanel.classList.add('hidden');
+            outputText.value = '';
+            charCount.textContent = 'حروف: 0';
+            numCount.textContent = 'أرقام: 0';
+            copyBtn.disabled = true;
+            fileInput.value = '';
+        }
+
+        // Image preprocessing logic using HTML Canvas
+        function preprocessImage(imgElement) {
+            const canvas = processingCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = imgElement.naturalWidth;
+            canvas.height = imgElement.naturalHeight;
+            
+            ctx.drawImage(imgElement, 0, 0);
+            
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+
+            const enhanceContrast = document.getElementById('enhance-contrast').checked;
+            const binarize = document.getElementById('binarize-img').checked;
+
+            if (enhanceContrast || binarize) {
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i+1];
+                    let b = data[i+2];
+                    
+                    // Convert to Grayscale
+                    let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                    
+                    if (enhanceContrast) {
+                        // Increase contrast stretching
+                        gray = (gray - 50) * (255 / (200 - 50));
+                        gray = Math.max(0, Math.min(255, gray));
                     }
-                });
 
-                // Format extracted output cleanly
-                formatExtractedOutput(text);
+                    if (binarize) {
+                        // Simple Thresholding (127 threshold value)
+                        gray = (gray > 125) ? 255 : 0;
+                    }
 
-                // Terminate Worker
-                await worker.terminate();
+                    data[i] = gray;
+                    data[i+1] = gray;
+                    data[i+2] = gray;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                return canvas.toDataURL();
+            }
+            
+            return imgElement.src;
+        }
 
-                // Show Preview Section and Hide Loader
-                document.getElementById('processing-loader').classList.add('hidden');
-                document.getElementById('preview-section').classList.remove('hidden');
-                document.getElementById('preview-section').scrollIntoView({ behavior: 'smooth' });
+        // Tesseract Worker Manager
+        async function getOCRWorker() {
+            if (cachedWorker) return cachedWorker;
+
+            progressStatus.textContent = "جاري تهيئة النظام والمكتبات...";
+            progressPercent.textContent = "5%";
+            progressBar.style.width = "5%";
+
+            // Initialize worker exactly using the requested paths to prevent dynamic 404s
+            const worker = await Tesseract.createWorker('eng', 1, {
+                workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+                langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
+                corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/tesseract-core.wasm.js'
+            });
+
+            cachedWorker = worker;
+            return worker;
+        }
+
+        // Main OCR processing routine
+        async function processOCR(imageSrc) {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            progressPanel.classList.remove('hidden');
+            copyBtn.disabled = true;
+            outputText.value = "جاري تحضير الصورة واستخراج النصوص...";
+
+            try {
+                // Preprocess image
+                const imgElement = new Image();
+                imgElement.src = imageSrc;
+                await new Promise((resolve) => imgElement.onload = resolve);
+                
+                const processedSrc = preprocessImage(imgElement);
+
+                // Get / Init Worker
+                const worker = await getOCRWorker();
+
+                // Setup logger
+                // Overwrite the progress logger dynamically
+                worker.logger = (m) => {
+                    if (m && m.status === 'recognizing text') {
+                        const pct = Math.round(m.progress * 100);
+                        progressStatus.textContent = "جاري معالجة الصورة واشتقاق الأرقام...";
+                        progressPercent.textContent = `${pct}%`;
+                        progressBar.style.width = `${pct}%`;
+                    } else if (m && m.status) {
+                        // Translate common status values to Arabic
+                        let friendlyStatus = "جاري تهيئة النظام...";
+                        if (m.status.includes('loading')) friendlyStatus = "جاري تحميل ملفات الذكاء الاصطناعي...";
+                        if (m.status.includes('initializing')) friendlyStatus = "جاري تهيئة معالجة المدخلات...";
+                        progressStatus.textContent = friendlyStatus;
+                    }
+                };
+
+                // Run Recognition
+                const result = await worker.recognize(processedSrc);
+                
+                // Post-process the text based on current filters
+                const rawText = result.data.text;
+                const filteredText = applyFilters(rawText, extractionMode);
+
+                // Display results
+                outputText.value = filteredText || "لم يتم العثور على أي نصوص تتطابق مع الفرز المحدد.";
+                
+                // Update stats
+                charCount.textContent = `حروف: ${filteredText.replace(/\s/g, '').length}`;
+                numCount.textContent = `أرقام: ${(filteredText.match(/\d/g) || []).length}`;
+
+                // Complete progress visual indicators
+                progressStatus.textContent = "اكتملت المعالجة بنجاح!";
+                progressPercent.textContent = "100%";
+                progressBar.style.width = "100%";
+                copyBtn.disabled = !filteredText;
+
+                // Add to history
+                addToHistory(filteredText);
 
             } catch (err) {
-                console.error("OCR Processing Error:", err);
-                alert("Error during processing. Please try another clear image.");
-                document.getElementById('processing-loader').classList.add('hidden');
+                console.error("OCR Error: ", err);
+                outputText.value = `حدث خطأ أثناء معالجة الصورة: ${err.message || err}`;
+                progressStatus.textContent = "فشلت المعالجة";
+                progressBar.style.width = "0%";
+            } finally {
+                isProcessing = false;
             }
         }
 
-        // Format and isolate typical numeric blocks (PINs, serials, codes)
-        function formatExtractedOutput(rawText) {
-            const outputArea = document.getElementById('extracted-text-area');
+        // Apply dynamic extraction filters
+        function applyFilters(text, mode) {
+            if (!text) return '';
             
-            // Basic clean up
-            let cleaned = rawText.trim();
-            
-            // Look for numeric sequences of 4 or more digits
-            const numberMatches = cleaned.match(/\b\d{4,20}\b/g) || [];
-            
-            let formattedText = `[very.ly Local OCR Engine — Results]\n`;
-            formattedText += `----------------------------------------\n\n`;
-            
-            if (numberMatches.length > 0) {
-                formattedText += `📌 DETECTED NUMERIC SEQUENCES & CODES:\n`;
-                numberMatches.forEach((num, idx) => {
-                    formattedText += `  [Code #${idx + 1}]: ${num}\n`;
-                });
-                formattedText += `\n----------------------------------------\n\n`;
+            if (mode === 'numbers') {
+                // Extract only numbers (sequences of 4 or more digits often represent codes)
+                const numbers = text.match(/\d+/g);
+                return numbers ? numbers.join('\n') : '';
             }
             
-            formattedText += `📝 RAW EXTRACTED TEXT:\n`;
-            formattedText += cleaned;
+            if (mode === 'serials') {
+                // Extract Alphanumeric characters only, filter out noise symbols
+                const lineByLine = text.split('\n');
+                const serials = lineByLine.map(line => {
+                    // Keep alphanumeric segments
+                    const cleanLine = line.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+                    return cleanLine;
+                }).filter(line => line.length > 3);
+                return serials.join('\n');
+            }
 
-            outputArea.value = formattedText;
+            // 'all' mode: return cleaned up text layout
+            return text.trim();
         }
 
-        // Copy Text Action
-        async function copyExtractedText() {
-            const textArea = document.getElementById('extracted-text-area');
-            const copyBtn = document.getElementById('copy-text-btn');
-            const originalHTML = copyBtn.innerHTML;
+        // Copy text helper
+        function copyResultText() {
+            if (!outputText.value) return;
             
-            try {
-                await navigator.clipboard.writeText(textArea.value);
-                
-                // Success feedback
-                copyBtn.innerHTML = `
-                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span class="lang-en">Copied!</span>
-                    <span class="lang-ar">تم النسخ!</span>
-                `;
-                copyBtn.classList.remove('bg-slate-900', 'hover:bg-slate-800');
-                copyBtn.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+            navigator.clipboard.writeText(outputText.value).then(() => {
+                copyBtnText.textContent = "تم النسخ!";
+                copyToast.classList.remove('opacity-0');
                 
                 setTimeout(() => {
-                    copyBtn.innerHTML = originalHTML;
-                    copyBtn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
-                    copyBtn.classList.add('bg-slate-900', 'hover:bg-slate-800', 'text-white');
+                    copyBtnText.textContent = "نسخ النص المستخرج";
+                    copyToast.classList.add('opacity-0');
                 }, 2000);
-            } catch (err) {
-                console.error('Failed to copy: ', err);
+            }).catch(err => {
+                alert('فشل نسخ النص: ' + err);
+            });
+        }
+
+        // Session History Management
+        function addToHistory(text) {
+            if (!text || text.trim() === "") return;
+            
+            // Extract a short snippet for display
+            const snippet = text.length > 50 ? text.substring(0, 50) + "..." : text;
+            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+            const historyItem = {
+                id: Date.now(),
+                time: time,
+                snippet: snippet,
+                fullText: text
+            };
+
+            scanHistory.unshift(historyItem);
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (scanHistory.length === 0) {
+                historyList.innerHTML = `<p class="text-xs text-zinc-600 italic text-center py-2">لا توجد عمليات مسح سابقة بعد.</p>`;
+                return;
+            }
+
+            historyList.innerHTML = scanHistory.map(item => `
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-800 hover:border-zinc-700 transition">
+                    <div class="flex flex-col gap-1 overflow-hidden max-w-[80%]">
+                        <span class="text-xs font-mono text-zinc-300 truncate text-right dir-ltr">${item.snippet.replace(/\n/g, ' ')}</span>
+                        <span class="text-[9px] text-zinc-500">${item.time}</span>
+                    </div>
+                    <button onclick="restoreHistoryItem(${item.id})" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold px-2 py-1 rounded bg-zinc-900 border border-zinc-800">
+                        عرض
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function restoreHistoryItem(id) {
+            const item = scanHistory.find(x => x.id === id);
+            if (item) {
+                outputText.value = item.fullText;
+                charCount.textContent = `حروف: ${item.fullText.replace(/\s/g, '').length}`;
+                numCount.textContent = `أرقام: ${(item.fullText.match(/\d/g) || []).length}`;
+                copyBtn.disabled = false;
             }
         }
-    </script>
 
+        function clearHistory() {
+            scanHistory = [];
+            renderHistory();
+        }
+    </script>
 </body>
 </html>
