@@ -3,831 +3,686 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ocr.very.ly | ماسح البطاقات الذكي</title>
+    <title>ocr.very.ly | مستخرج أكواد الفواتير والبطاقات الذكي</title>
     
-    <!-- Meta Tags for SEO -->
-    <meta name="description" content="قم بمسح بطاقات الشحن والإنترنت فورياً واستخراج الرموز بدقة عالية باستخدام تقنيات الذكاء الاصطناعي">
-    
-    <!-- Tailwind CSS CDN -->
+    <!-- Meta Tags for SEO & Premium Feel -->
+    <meta name="description" content="منصة ذكية فائقة السرعة لاستخراج رموز QR وأكواد الـ PIN والأرقام التسلسلية من صور الفواتير والبطاقات فورياً بدون استخدام الكاميرا وبخصوصية تامة.">
+    <meta name="theme-color" content="#090d0a">
+
+    <!-- Fonts: Tajawal for Arabic, Plus Jakarta Sans for English/Numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS Browser CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        pearl: {
-                            50: '#F4F7F5',
-                            100: '#E9EFEA',
-                            200: '#D2DFD5',
-                            300: '#B2C9B7',
-                            400: '#8CA993',
-                            500: '#698971',
-                            600: '#526D59',
-                            700: '#415647',
-                            800: '#344539',
-                            900: '#1B251E',
-                            950: '#0F1511',
-                        },
-                        accent: {
-                            gold: '#D4AF37',
-                            bronze: '#CD7F32',
-                            mint: '#A3E635',
-                        }
-                    },
                     fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Cairo', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'Tajawal', 'sans-serif'],
+                        arabic: ['Tajawal', 'sans-serif']
                     },
-                    animation: {
-                        'float': 'float 6s ease-in-out infinite',
-                        'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
-                        'shimmer': 'shimmer 2.5s linear infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-                            '50%': { transform: 'translateY(-10px) rotate(1deg)' },
+                    colors: {
+                        olive: {
+                            50: '#f4f7f4',
+                            100: '#e6ebe6',
+                            200: '#ccd8cc',
+                            300: '#a3baa3',
+                            400: '#759675',
+                            500: '#547854',
+                            600: '#3f5e3f',
+                            700: '#344c34',
+                            800: '#2b3e2b',
+                            900: '#1c2b1c',
+                            950: '#0c140c',
                         },
-                        pulseSubtle: {
-                            '0%, 100%': { opacity: '1' },
-                            '50%': { opacity: '0.85' },
-                        },
-                        shimmer: {
-                            '0%': { backgroundPosition: '-200% 0' },
-                            '100%': { backgroundPosition: '200% 0' },
+                        pearl: {
+                            50: '#fafaf9',
+                            100: '#f5f5f4',
+                            200: '#e7e5e4',
+                            300: '#d6d3d1',
+                            400: '#a8a29e',
+                            500: '#78716c',
+                            600: '#57534e',
+                            700: '#44403c',
+                            800: '#292524',
+                            900: '#1c1917',
+                            950: '#0c0a09',
                         }
+                    },
+                    backgroundImage: {
+                        'pearl-gradient': 'radial-gradient(circle at 50% 50%, rgba(250, 250, 249, 0.03) 0%, rgba(12, 20, 12, 0.05) 100%)',
+                        'iridescent': 'linear-gradient(135deg, rgba(163, 186, 163, 0.1) 0%, rgba(214, 211, 209, 0.05) 50%, rgba(117, 150, 117, 0.1) 100%)'
                     }
                 }
             }
         }
     </script>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Tesseract.js Production CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- External Libraries (Absolute CDNs) -->
+    <!-- jsQR for instant QR Code decoding from canvas pixels -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- Tesseract.js for high-fidelity OCR scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
 
     <style>
         body {
-            font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
-            background-color: #FFFFFF;
-            overflow-x: hidden;
+            font-family: 'Tajawal', 'Plus Jakarta Sans', sans-serif;
+            background-color: #060907;
         }
-        .pearl-gradient {
-            background: radial-gradient(circle at 50% 50%, rgba(244, 247, 245, 0.6) 0%, rgba(255, 255, 255, 1) 100%);
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-        .holographic-overlay {
-            background: linear-gradient(135deg, rgba(163, 230, 53, 0.1) 0%, rgba(212, 175, 55, 0.1) 50%, rgba(147, 197, 253, 0.1) 100%);
+        ::-webkit-scrollbar-track {
+            background: #060907;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+        ::-webkit-scrollbar-thumb {
+            background: #1c2b1c;
+            border-radius: 3px;
         }
-        .dark-glass-card {
-            background: rgba(15, 21, 17, 0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        ::-webkit-scrollbar-thumb:hover {
+            background: #344c34;
         }
     </style>
 </head>
-<body class="pearl-gradient text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="text-pearl-100 min-h-screen flex flex-col justify-between overflow-x-hidden relative selection:bg-olive-600 selection:text-white">
+
+    <!-- Ambient Glowing Pearl Backdrops -->
+    <div class="absolute top-0 right-1/4 w-[500px] h-[500px] bg-olive-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    <div class="absolute bottom-1/4 left-1/4 w-[600px] h-[600px] bg-emerald-900/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-pearl-gradient pointer-events-none z-0"></div>
 
     <!-- Header System -->
-    <header class="sticky top-0 z-50 glass-card border-b border-pearl-100 transition-all duration-300">
+    <header class="border-b border-olive-900/40 bg-olive-950/30 backdrop-blur-md sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <!-- Brand Logo -->
-            <a href="#" class="flex items-center gap-3 group" aria-label="ocr.very.ly Homepage">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pearl-800 to-pearl-600 flex items-center justify-center shadow-md shadow-pearl-900/10 group-hover:scale-105 transition-transform duration-300">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
+            <a href="#" class="flex items-center gap-3 group" aria-label="الصفحة الرئيسية">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-olive-600 to-olive-400 p-[1px] shadow-lg shadow-olive-950/50 transition-transform group-hover:scale-105">
+                    <div class="w-full h-full bg-olive-950 rounded-[11px] flex items-center justify-center">
+                        <svg class="w-5 h-5 text-olive-400 group-hover:text-olive-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h.01M16 20h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2h2" />
+                        </svg>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-xl font-extrabold tracking-tight text-pearl-900 block font-sans">ocr.<span class="text-emerald-600">very</span>.ly</span>
-                    <span class="text-[10px] text-pearl-500 block tracking-wider -mt-1 font-semibold uppercase">Voucher Intelligence</span>
+                <div class="flex flex-col items-start">
+                    <span class="text-lg font-bold tracking-tight text-white group-hover:text-olive-300 transition-colors">ocr.<span class="text-olive-400">very</span>.ly</span>
+                    <span class="text-[10px] text-pearl-400 tracking-wider uppercase font-sans">Secure Voucher Decoder</span>
                 </div>
             </a>
 
-            <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center gap-8">
-                <a href="#how-it-works" class="text-sm font-medium text-pearl-600 hover:text-pearl-900 transition-colors">كيف يعمل؟</a>
-                <a href="#features" class="text-sm font-medium text-pearl-600 hover:text-pearl-900 transition-colors">المميزات</a>
-                <a href="#supported-networks" class="text-sm font-medium text-pearl-600 hover:text-pearl-900 transition-colors">الشبكات المدعومة</a>
-            </nav>
-
-            <!-- Language / Actions -->
-            <div class="flex items-center gap-4">
-                <span class="text-xs bg-pearl-100 text-pearl-800 px-3 py-1.5 rounded-full font-semibold">العربية (RTL)</span>
-                <a href="#scanner" class="hidden sm:inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-pearl-900 hover:bg-pearl-800 rounded-lg transition-all shadow-sm">ابدأ المسح الآن</a>
+            <!-- Status Badge / Privacy Pill -->
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-olive-950/80 border border-olive-800/40 text-xs text-olive-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>معالجة محلية آمنة 100%</span>
             </div>
         </div>
     </header>
 
-    <main id="main-content" class="flex-grow">
-        <!-- Hero & Drag-and-Drop Scanner Section -->
-        <section id="scanner" class="relative py-20 lg:py-28 overflow-hidden">
-            <!-- Iridescent Background Elements -->
-            <div class="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-tr from-emerald-200/30 via-teal-100/20 to-lime-200/30 blur-3xl -z-10"></div>
-            <div class="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-purple-100/20 via-blue-50/20 to-emerald-100/20 blur-3xl -z-10"></div>
+    <!-- Main Content Container -->
+    <main id="main-content" class="flex-grow z-10 max-w-7xl w-full mx-auto px-6 py-12 flex flex-col gap-12">
+        
+        <!-- Hero & Context Section -->
+        <section class="text-center max-w-3xl mx-auto flex flex-col gap-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                استخراج فوري لبيانات <span class="bg-gradient-to-r from-olive-400 to-emerald-300 bg-clip-text text-transparent">بطاقات الشحن والفواتير</span>
+            </h1>
+            <p class="text-pearl-300 text-base md:text-lg leading-relaxed">
+                ارفع لقطة الشاشة المستلمة عبر الواتساب أو أي صورة كرت شحن، وسيتولى الذكاء الاصطناعي قراءة كود الـ QR، الـ PIN، والرقم التسلسلي في نفس اللحظة محلياً دون رفع ملفاتك لأي خادم.
+            </p>
+        </section>
 
-            <div class="max-w-4xl mx-auto px-6 text-center">
-                <!-- Badging -->
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold mb-6 animate-pulse-subtle">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    معالجة محلية آمنة 100% داخل المتصفح
-                </div>
-
-                <!-- Main Heading -->
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-pearl-950 tracking-tight leading-tight mb-6">
-                    امسح بطاقات الشحن <br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 via-emerald-600 to-lime-600">واستخرج الرموز فوراً</span>
-                </h1>
+        <!-- Dynamic Workspace Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Upload & Interactive Preview (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
                 
-                <p class="text-lg text-pearl-600 max-w-2xl mx-auto mb-12 leading-relaxed">
-                    منصة ذكية متطورة تتيح لك قراءة بطاقات الاتصال والإنترنت، عزل الأرقام الطويلة والرموز التعريفية، وتحويلها إلى كرت رقمي تفاعلي بلمحة بصر.
-                </p>
+                <!-- Dropzone Area -->
+                <div id="drop-zone" class="relative group border-2 border-dashed border-olive-800/60 hover:border-olive-500/80 bg-olive-950/20 hover:bg-olive-950/40 rounded-3xl p-8 md:p-12 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-4 text-center overflow-hidden">
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                    
+                    <!-- Decorative background glow inside dropzone -->
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-olive-950/10 pointer-events-none"></div>
 
-                <!-- Interactive Dropzone Area -->
-                <div class="max-w-2xl mx-auto mb-12">
-                    <div id="dropzone" class="relative group cursor-pointer bg-white border-2 border-dashed border-pearl-300 hover:border-emerald-500 rounded-3xl p-8 sm:p-12 transition-all duration-300 shadow-xl shadow-pearl-900/5 hover:shadow-emerald-900/5">
-                        <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" aria-label="تحميل صورة بطاقة الشحن">
-                        
-                        <!-- Uploading State Design -->
-                        <div id="upload-prompt" class="flex flex-col items-center justify-center">
-                            <div class="w-16 h-16 rounded-2xl bg-pearl-50 text-pearl-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all duration-300">
-                                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-bold text-pearl-900 mb-2">اسحب صورة الكرت أو اضغط هنا للتحميل</h3>
-                            <p class="text-sm text-pearl-500">يدعم صيغ PNG, JPG, JPEG (يفضل إضاءة ممتازة)</p>
-                        </div>
+                    <!-- Upload Icon / Animation -->
+                    <div class="w-16 h-16 rounded-2xl bg-olive-900/40 flex items-center justify-center border border-olive-800/40 group-hover:scale-110 transition-transform duration-300 relative">
+                        <svg class="w-8 h-8 text-olive-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                    </div>
 
-                        <!-- Processing State (Hidden initially) -->
-                        <div id="processing-state" class="hidden flex-col items-center justify-center py-6">
-                            <!-- Dual ring loader -->
-                            <div class="relative w-20 h-20 mb-6">
-                                <div class="absolute inset-0 rounded-full border-4 border-emerald-100 border-t-emerald-600 animate-spin"></div>
-                                <div class="absolute inset-2 rounded-full border-4 border-pearl-100 border-b-lime-500 animate-spin" style="animation-direction: reverse;"></div>
-                            </div>
-                            <h3 id="status-step" class="text-lg font-bold text-pearl-900 mb-2">جاري تهيئة المحرك...</h3>
-                            <p class="text-sm text-pearl-500" id="status-percentage">الرجاء الانتظار، تتم المعالجة بالكامل محلياً</p>
-                            
-                            <!-- Mini image preview of the processed canvas -->
-                            <div class="mt-4 p-2 bg-slate-100 rounded-lg max-w-[150px] overflow-hidden hidden" id="preview-wrapper">
-                                <canvas id="processed-canvas" class="w-full h-auto rounded border border-slate-200"></canvas>
-                                <span class="text-[9px] text-slate-500 block mt-1">تصفية التباين العالي</span>
-                            </div>
-                        </div>
+                    <div class="flex flex-col gap-1.5 z-10">
+                        <p class="text-lg font-bold text-white">اسحب وأسقط صورة الفاتورة هنا</p>
+                        <p class="text-sm text-pearl-400">أو اضغط لتصفح الملفات من جهازك مباشرة</p>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-2 mt-2 z-10 text-xs text-pearl-400">
+                        <span class="px-2.5 py-1 rounded-md bg-olive-950/60 border border-olive-900/40">PNG</span>
+                        <span class="px-2.5 py-1 rounded-md bg-olive-950/60 border border-olive-900/40">JPEG</span>
+                        <span class="px-2.5 py-1 rounded-md bg-olive-950/60 border border-olive-900/40">WebP</span>
+                        <span class="px-2.5 py-1 rounded-md bg-olive-950/60 border border-olive-900/40">لقطات الشاشة (WhatsApp)</span>
                     </div>
                 </div>
 
-                <!-- The Interactive Digital Voucher Card (Hidden initially) -->
-                <div id="voucher-result-container" class="hidden max-w-xl mx-auto transform translate-y-4 opacity-0 transition-all duration-700 ease-out mb-20">
-                    <!-- Card Glow Wrapper -->
-                    <div class="relative p-[1px] rounded-3xl bg-gradient-to-br from-emerald-400 via-lime-300 to-amber-300 shadow-2xl shadow-emerald-950/20">
-                        
-                        <!-- Main Card Body -->
-                        <div class="dark-glass-card rounded-[23px] overflow-hidden text-right relative">
-                            <!-- Holographic Security Pattern Overlay -->
-                            <div class="absolute inset-0 holographic-overlay opacity-40 pointer-events-none"></div>
-                            
-                            <!-- Card Header -->
-                            <div class="p-6 border-b border-white/10 flex items-center justify-between relative z-10">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-white">بطاقة رقمية مستخرجة</h4>
-                                        <p class="text-[10px] text-pearl-400">تم التحقق من هيكلية الأرقام</p>
-                                    </div>
-                                </div>
-                                <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">ocr.very.ly</span>
-                            </div>
+                <!-- Processing / Progress Card (Hidden by default) -->
+                <div id="progress-card" class="hidden bg-olive-950/40 border border-olive-900/60 rounded-2xl p-6 flex-col gap-4 animate-pulse">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-olive-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-olive-500"></span>
+                            </span>
+                            <span class="text-sm font-bold text-white" id="progress-status">جاري تشغيل محرك المعالجة المزدوج...</span>
+                        </div>
+                        <span class="text-xs font-mono text-olive-400" id="progress-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-olive-950 rounded-full h-2 overflow-hidden border border-olive-900">
+                        <div id="progress-bar" class="bg-gradient-to-r from-olive-500 to-emerald-400 h-2 w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
 
-                            <!-- Card Body Fields -->
-                            <div class="p-6 space-y-6 relative z-10">
-                                <!-- Field 1: PIN CODE -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-bold text-pearl-300 tracking-wide">رمز التعبئة (PIN-CODE)</label>
-                                    <div class="relative flex items-center bg-white/5 rounded-xl border border-white/10 focus-within:border-emerald-500/50 transition-all p-1">
-                                        <input type="text" id="pin-output" readonly 
-                                               class="w-full bg-transparent text-white font-mono text-xl sm:text-2xl font-bold tracking-[0.2em] text-center py-3 pl-12 pr-4 outline-none select-all"
-                                               value="---- ---- ---- ----">
-                                        <button onclick="copyToClipboard('pin-output', 'copy-pin-btn')" id="copy-pin-btn"
-                                                class="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all active:scale-95"
-                                                aria-label="نسخ رمز التعبئة">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
+                <!-- Live Image Preview Container (Hidden by default) -->
+                <div id="preview-card" class="hidden bg-olive-950/30 border border-olive-900/40 rounded-3xl p-6 flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-olive-900/40 pb-4">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-olive-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            معاينة الصورة المرفوعة وتحليلها
+                        </h3>
+                        <button id="btn-reset" class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1">
+                            حذف الصورة والبدء من جديد
+                        </button>
+                    </div>
+                    <div class="relative rounded-xl overflow-hidden bg-olive-950/80 border border-olive-900 flex justify-center items-center max-h-[400px]">
+                        <img id="image-preview" src="" alt="Voucher Preview" class="max-w-full max-h-[400px] object-contain">
+                        <!-- Hidden Canvas for Pixel Extraction -->
+                        <canvas id="process-canvas" class="hidden"></canvas>
+                    </div>
+                </div>
 
-                                <!-- Field 2: Serial Number -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-bold text-pearl-300 tracking-wide">الرقم التسلسلي (Serial Number)</label>
-                                    <div class="relative flex items-center bg-white/5 rounded-xl border border-white/10 focus-within:border-emerald-500/50 transition-all p-1">
-                                        <input type="text" id="serial-output" readonly 
-                                               class="w-full bg-transparent text-white font-mono text-base sm:text-lg font-semibold tracking-wider text-center py-3 pl-12 pr-4 outline-none select-all"
-                                               value="--------------">
-                                        <button onclick="copyToClipboard('serial-output', 'copy-serial-btn')" id="copy-serial-btn"
-                                                class="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95"
-                                                aria-label="نسخ الرقم التسلسلي">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+            </div>
 
-                            <!-- Card Footer Action -->
-                            <div class="bg-white/[0.02] px-6 py-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 relative z-10 text-xs text-pearl-400">
-                                <span>البيانات مستخرجة عبر الذكاء الاصطناعي على جهازك مباشرة.</span>
-                                <button onclick="resetScanner()" class="text-emerald-400 hover:text-emerald-300 font-bold transition-colors">مسح كرت آخر</button>
-                            </div>
+            <!-- Right Column: Extracted Smart Voucher Grid (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <div class="bg-olive-950/20 border border-olive-900/40 rounded-3xl p-6 md:p-8 flex flex-col gap-6 relative">
+                    
+                    <div class="flex flex-col gap-1.5 border-b border-olive-900/40 pb-4">
+                        <h2 class="text-xl font-bold text-white">بيانات الكرت المستخرجة</h2>
+                        <p class="text-xs text-pearl-400">تظهر النتائج تلقائياً بمجرد انتهاء التحليل الرقمي للصورة.</p>
+                    </div>
+
+                    <!-- Box 1: QR Code Output -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-pearl-300 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-olive-400"></span>
+                                الرابط أو الكود المستخرج من الـ QR
+                            </label>
+                            <span id="badge-qr" class="text-[10px] px-2 py-0.5 rounded bg-stone-900 text-pearl-500 border border-stone-800">في انتظار الصورة</span>
+                        </div>
+                        <div class="relative flex items-center">
+                            <input type="text" id="output-qr" readonly placeholder="سيظهر كود الـ QR هنا تلقائياً..." 
+                                class="w-full bg-olive-950/60 border border-olive-900/60 rounded-xl py-3.5 pl-12 pr-4 text-sm font-mono text-white placeholder-pearl-600 focus:outline-none focus:border-olive-500 transition-colors">
+                            <button onclick="copyToClipboard('output-qr', 'btn-copy-qr')" id="btn-copy-qr" disabled aria-label="نسخ كود الـ QR"
+                                class="absolute left-2 p-2 rounded-lg bg-olive-900/40 hover:bg-olive-800/60 text-olive-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Raw Text Debug Dropdown (Optional/Fallback) -->
-                    <details class="mt-4 text-right bg-white/80 border border-pearl-200 rounded-xl p-3 transition-all">
-                        <summary class="text-xs font-bold text-pearl-600 cursor-pointer hover:text-pearl-900 outline-none select-none">عرض النص الخام المستخرج (في حال عدم دقة الفرز التلقائي)</summary>
-                        <div class="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200 text-left font-mono text-xs text-slate-700 max-h-40 overflow-y-auto" id="raw-text-output" dir="ltr">
-                            لم يتم استخراج أي نص بعد.
+                    <!-- Box 2: Smart PIN Output (12-16 Digits) -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-pearl-300 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-olive-400"></span>
+                                رمز الـ PIN المستخرج ذكياً
+                            </label>
+                            <span id="badge-pin" class="text-[10px] px-2 py-0.5 rounded bg-stone-900 text-pearl-500 border border-stone-800">في انتظار الصورة</span>
+                        </div>
+                        <div class="relative flex items-center">
+                            <input type="text" id="output-pin" readonly placeholder="سيظهر رمز الـ PIN المكون من 12-16 رقم..." 
+                                class="w-full bg-olive-950/60 border border-olive-900/60 rounded-xl py-3.5 pl-12 pr-4 text-sm font-mono text-white placeholder-pearl-600 focus:outline-none focus:border-olive-500 transition-colors">
+                            <button onclick="copyToClipboard('output-pin', 'btn-copy-pin')" id="btn-copy-pin" disabled aria-label="نسخ رمز الـ PIN"
+                                class="absolute left-2 p-2 rounded-lg bg-olive-900/40 hover:bg-olive-800/60 text-olive-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Box 3: Serial Number Output -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-pearl-300 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-olive-400"></span>
+                                الرقم التسلسلي (Serial Number)
+                            </label>
+                            <span id="badge-serial" class="text-[10px] px-2 py-0.5 rounded bg-stone-900 text-pearl-500 border border-stone-800">في انتظار الصورة</span>
+                        </div>
+                        <div class="relative flex items-center">
+                            <input type="text" id="output-serial" readonly placeholder="سيظهر الرقم التسلسلي للفاتورة هنا..." 
+                                class="w-full bg-olive-950/60 border border-olive-900/60 rounded-xl py-3.5 pl-12 pr-4 text-sm font-mono text-white placeholder-pearl-600 focus:outline-none focus:border-olive-500 transition-colors">
+                            <button onclick="copyToClipboard('output-serial', 'btn-copy-serial')" id="btn-copy-serial" disabled aria-label="نسخ الرقم التسلسلي"
+                                class="absolute left-2 p-2 rounded-lg bg-olive-900/40 hover:bg-olive-800/60 text-olive-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Raw Text Collapse (For reassurance & backup extraction) -->
+                    <details class="group mt-2 border-t border-olive-900/40 pt-4">
+                        <summary class="list-none flex items-center justify-between text-xs text-pearl-400 hover:text-white cursor-pointer select-none">
+                            <span>عرض النص الكامل المستخرج خام (للنسخ اليدوي)</span>
+                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </summary>
+                        <div class="mt-3">
+                            <textarea id="output-raw" readonly class="w-full h-32 bg-olive-950/80 border border-olive-900/80 rounded-xl p-3 text-xs font-mono text-pearl-300 focus:outline-none focus:border-olive-500" placeholder="النص الكامل المستخرج عبر OCR سيظهر هنا..."></textarea>
                         </div>
                     </details>
+
                 </div>
+            </div>
+
+        </section>
+
+        <!-- Dynamic Information Grid / Feature Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <div class="p-6 rounded-2xl bg-olive-950/10 border border-olive-900/40 flex flex-col gap-2">
+                <div class="w-10 h-10 rounded-lg bg-olive-900/60 flex items-center justify-center text-olive-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-white text-sm">خصوصية مطلقة وأمان</h3>
+                <p class="text-xs text-pearl-400 leading-relaxed">تتم معالجة جميع الصور محليًا داخل متصفحك مباشرة. لن يتم إرسال أو رفع بياناتك أو صور بطاقاتك لأي خادم خارجي نهائياً.</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-olive-950/10 border border-olive-900/40 flex flex-col gap-2">
+                <div class="w-10 h-10 rounded-lg bg-olive-900/60 flex items-center justify-center text-olive-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-white text-sm">معالجة متوازية مزدوجة</h3>
+                <p class="text-xs text-pearl-400 leading-relaxed">يستخدم التطبيق تقنيات متزامنة لتشغيل قارئ الـ QR والـ OCR معاً لضمان الحصول على كافة الأكواد المتاحة في الصورة دفعة واحدة وبسرعة فائقة.</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-olive-950/10 border border-olive-900/40 flex flex-col gap-2">
+                <div class="w-10 h-10 rounded-lg bg-olive-900/60 flex items-center justify-center text-olive-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-white text-sm">متوافق مع لقطات الشاشة</h3>
+                <p class="text-xs text-pearl-400 leading-relaxed">مصمم خصيصاً ليتعامل مع لقطات الشاشة الواردة عبر التطبيقات كـ WhatsApp والتي قد تحتوي على نصوص جانبية أو تشويش بصري خفيف.</p>
             </div>
         </section>
 
-        <!-- Overlapping Isometric Mockup Section / Visual Showcase -->
-        <section id="how-it-works" class="py-24 bg-gradient-to-b from-white to-pearl-50 relative overflow-hidden">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                    <!-- Left Column: Typography & Explanations -->
-                    <div class="lg:col-span-5 space-y-8">
-                        <div class="space-y-4">
-                            <span class="text-emerald-700 font-bold tracking-wider text-xs uppercase block">دقة فائقة وسرعة متناهية</span>
-                            <h2 class="text-3xl sm:text-4xl font-extrabold text-pearl-950 tracking-tight leading-tight">كيف نقوم بتحويل الكرت الورقي إلى واجهة رقمية؟</h2>
-                        </div>
-                        
-                        <p class="text-pearl-600 leading-relaxed">
-                            تعتمد تقنيتنا على معالجة مصفوفة الصورة محلياً داخل المتصفح لرفع التباين وتصفية الظلال والتشويش، ثم تمريرها إلى محرك الحوسبة البصرية لتحديد الأرقام وعزلها تلقائياً.
-                        </p>
-
-                        <!-- Step List -->
-                        <div class="space-y-4">
-                            <div class="flex gap-4">
-                                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold shrink-0">١</div>
-                                <div>
-                                    <h4 class="font-bold text-pearl-900">تصفية الصورة التلقائية</h4>
-                                    <p class="text-sm text-pearl-500">نقوم بتعديل السطوع وتحويل الألوان إلى تدرج رمادي عالي التباين لضمان قراءة مثالية.</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold shrink-0">٢</div>
-                                <div>
-                                    <h4 class="font-bold text-pearl-900">فرز الأرقام بالذكاء الاصطناعي</h4>
-                                    <p class="text-sm text-pearl-500">عبر خوارزميات RegExp المتقدمة، يتم تصفية الأرقام وعزل الرموز التسلسلية عن الرموز الفرعية.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Column: Overlapping Isometric Mockup -->
-                    <div class="lg:col-span-7 relative flex justify-center items-center">
-                        <!-- Decorative Pastel Backdrops -->
-                        <div class="absolute w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-emerald-100 to-lime-100/30 blur-2xl opacity-70 -z-10"></div>
-                        <div class="absolute w-72 h-72 rounded-full bg-pearl-200/50 blur-xl -z-10 translate-x-12 translate-y-12"></div>
-
-                        <!-- Main Isometric Container -->
-                        <div class="relative w-full max-w-md h-[450px] flex items-center justify-center">
-                            <!-- Phone Mockup 1 (Back / Base) -->
-                            <div class="absolute w-64 h-[380px] bg-slate-900 rounded-[40px] border-4 border-slate-800 shadow-2xl p-4 transform -rotate-12 -translate-x-16 translate-y-6 scale-95 transition-transform duration-500 hover:scale-100 z-10">
-                                <div class="w-full h-full bg-gradient-to-b from-slate-950 to-slate-900 rounded-[32px] overflow-hidden flex flex-col justify-between p-4 text-left font-mono text-[9px] text-emerald-400">
-                                    <div class="space-y-2 opacity-60">
-                                        <p>&gt; OCR initialized successfully.</p>
-                                        <p>&gt; Loading Arabic language model...</p>
-                                        <p>&gt; Binarization filter completed in 42ms.</p>
-                                        <p class="text-amber-400">&gt; Warning: Shadow detected. Adjusting contrast curve.</p>
-                                    </div>
-                                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded p-2 text-[10px]">
-                                        <span class="text-white block font-bold">Regex Match Success:</span>
-                                        PIN: 14 Digits Found<br>
-                                        SN: 12 Digits Found
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Phone Mockup 2 (Front / Overlay) -->
-                            <div class="absolute w-64 h-[380px] bg-emerald-950 rounded-[40px] border-4 border-emerald-900 shadow-2xl p-4 transform rotate-6 translate-x-12 -translate-y-6 transition-transform duration-500 hover:scale-105 z-20">
-                                <div class="w-full h-full bg-gradient-to-b from-emerald-900 to-slate-950 rounded-[32px] overflow-hidden flex flex-col justify-between p-4 text-right">
-                                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
-                                        <span class="text-[10px] font-bold text-emerald-400">Voucher Generated</span>
-                                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                    </div>
-                                    <div class="space-y-3 my-auto">
-                                        <div class="bg-white/5 rounded p-2 space-y-1">
-                                            <span class="text-[8px] text-pearl-400 block">PIN-CODE</span>
-                                            <span class="text-[11px] font-mono text-white tracking-widest block">4829 1049 3829 10</span>
-                                        </div>
-                                        <div class="bg-white/5 rounded p-2 space-y-1">
-                                            <span class="text-[8px] text-pearl-400 block">SERIAL NO</span>
-                                            <span class="text-[11px] font-mono text-white tracking-wider block">10039284920</span>
-                                        </div>
-                                    </div>
-                                    <div class="w-full py-1.5 bg-emerald-500 rounded text-center text-white text-[10px] font-bold">
-                                        تم النسخ بنجاح
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Alternating Feature Rows -->
-        <section id="features" class="py-24 bg-white relative">
-            <div class="max-w-7xl mx-auto px-6 space-y-32">
-                <!-- Row A: Right-aligned meticulous typography, Left-aligned minimalist wireframe -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                    <div class="space-y-6 lg:order-2">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-3xl font-extrabold text-pearl-950 tracking-tight">خصوصية تامة، لا يتم إرسال أي بيانات لخوادمنا</h3>
-                        <p class="text-pearl-600 leading-relaxed">
-                            نحن نؤمن بأمان البيانات وخصوصيتها. تتم عملية قراءة الصور وتحليل النصوص بالكامل داخل متصفحك الخاص (Client-Side) باستخدام معالجات حاسوبك أو هاتفك الذكي. لن ترفع صور كروتك السرية إلى أي خادم خارجي على الإطلاق.
-                        </p>
-                    </div>
-                    <div class="lg:order-1 bg-pearl-50 rounded-3xl p-8 border border-pearl-100 flex items-center justify-center relative min-h-[300px] overflow-hidden">
-                        <!-- Technical radial background vector lines -->
-                        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#526D59_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                        <div class="relative w-full max-w-sm bg-white rounded-2xl border border-pearl-200 p-6 shadow-lg">
-                            <h4 class="text-xs font-bold text-pearl-400 mb-4 tracking-wider uppercase">Local Processing Shield</h4>
-                            <div class="flex items-center gap-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                                <div class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
-                                <span class="text-xs font-bold text-emerald-800">جهازك في وضعية المعالجة الآمنة والمستقلة</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Row B: Left-aligned feature summary, Right-aligned stacked circular crop previews -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                    <div class="space-y-6">
-                        <div class="w-12 h-12 rounded-2xl bg-lime-50 text-lime-700 flex items-center justify-center">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-3xl font-extrabold text-pearl-950 tracking-tight">تحليل بياني ذكي وتصنيف فوري</h3>
-                        <p class="text-pearl-600 leading-relaxed">
-                            يقوم النظام بمسح الرموز وتقييم جودتها، ثم يعزل الأرقام الطويلة التي تتراوح بين 12 إلى 16 رقماً كرموز تعبئة، والرموز التي تبدأ بـ 100 أو تحتوي على دلالات تسلسلية كأرقام تسلسلية للبطاقة.
-                        </p>
-                    </div>
-                    <div class="bg-pearl-50 rounded-3xl p-8 border border-pearl-100 flex items-center justify-center relative min-h-[300px] overflow-hidden">
-                        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#526D59_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                        <!-- Stacked circular preview -->
-                        <div class="relative flex items-center justify-center w-full max-w-xs h-64">
-                            <div class="absolute w-40 h-40 rounded-full border border-pearl-200 bg-white shadow-xl flex flex-col items-center justify-center p-4 transform -translate-x-12 -translate-y-6">
-                                <span class="text-[10px] font-bold text-pearl-400">PIN Filter</span>
-                                <span class="text-sm font-mono font-bold text-emerald-600 mt-2">12-16 Digits</span>
-                            </div>
-                            <div class="absolute w-40 h-40 rounded-full border border-pearl-200 bg-white shadow-xl flex flex-col items-center justify-center p-4 transform translate-x-12 translate-y-6">
-                                <span class="text-[10px] font-bold text-pearl-400">S/N Filter</span>
-                                <span class="text-sm font-mono font-bold text-amber-600 mt-2">Standalone No.</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Premium Asset Matrix (Market Grid) -->
-        <section id="supported-networks" class="py-24 bg-pearl-50 border-t border-b border-pearl-100">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
-                    <h2 class="text-3xl font-extrabold text-pearl-950 tracking-tight">الشبكات والبطاقات المدعومة افتراضياً</h2>
-                    <p class="text-pearl-600 text-sm">تم تدريب الخوارزميات محلياً للتعرف على هياكل كروت وبطاقات الشحن الخاصة بكافة مزودي الخدمة الإقليميين والدوليين.</p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Card 1 -->
-                    <div class="bg-white rounded-2xl p-6 border border-pearl-200 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-sm mb-4">Mobily</div>
-                            <h4 class="font-bold text-pearl-900">موبايلي السعودية</h4>
-                            <p class="text-xs text-pearl-500 mt-1">رمز تعبئة مكون من 15 خانة ورقم تسلسلي مخصص.</p>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-pearl-100 flex items-center justify-between">
-                            <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> مدعوم بالكامل
-                            </span>
-                            <a href="#scanner" class="text-xs text-pearl-400 hover:text-pearl-900 transition-colors">جرب الآن</a>
-                        </div>
-                    </div>
-
-                    <!-- Card 2 -->
-                    <div class="bg-white rounded-2xl p-6 border border-pearl-200 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm mb-4">STC</div>
-                            <h4 class="font-bold text-pearl-900">الاتصالات السعودية</h4>
-                            <p class="text-xs text-pearl-500 mt-1">تحليل دقيق لأرقام كروت شحن سوا وفواتير الاتصال.</p>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-pearl-100 flex items-center justify-between">
-                            <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> مدعوم بالكامل
-                            </span>
-                            <a href="#scanner" class="text-xs text-pearl-400 hover:text-pearl-900 transition-colors">جرب الآن</a>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 -->
-                    <div class="bg-white rounded-2xl p-6 border border-pearl-200 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm mb-4">Zain</div>
-                            <h4 class="font-bold text-pearl-900">زين للاتصالات</h4>
-                            <p class="text-xs text-pearl-500 mt-1">فرز تلقائي لرموز إعادة الشحن السريع والخطوط مسبقة الدفع.</p>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-pearl-100 flex items-center justify-between">
-                            <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> مدعوم بالكامل
-                            </span>
-                            <a href="#scanner" class="text-xs text-pearl-400 hover:text-pearl-900 transition-colors">جرب الآن</a>
-                        </div>
-                    </div>
-
-                    <!-- Card 4 -->
-                    <div class="bg-white rounded-2xl p-6 border border-pearl-200 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm mb-4">Global</div>
-                            <h4 class="font-bold text-pearl-900">بطاقات دولية / أخرى</h4>
-                            <p class="text-xs text-pearl-500 mt-1">كروت إنترنت، ألعاب، وبطاقات شحن دولية متنوعة.</p>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-pearl-100 flex items-center justify-between">
-                            <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> مدعوم بالكامل
-                            </span>
-                            <a href="#scanner" class="text-xs text-pearl-400 hover:text-pearl-900 transition-colors">جرب الآن</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3D Product Showcase Divider (Visual Highlight) -->
-        <section class="relative py-20 bg-pearl-950 overflow-hidden text-center text-white">
-            <!-- Iridescent overlay -->
-            <div class="absolute inset-0 holographic-overlay opacity-20"></div>
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-emerald-500/10 blur-3xl"></div>
-
-            <div class="max-w-4xl mx-auto px-6 relative z-10 space-y-6">
-                <span class="text-xs font-bold text-emerald-400 tracking-wider uppercase">سرعة الاستخراج</span>
-                <h3 class="text-3xl sm:text-4xl font-extrabold tracking-tight">أقل من ٣ ثوانٍ تفصلك عن الرمز الرقمي</h3>
-                <p class="text-sm text-pearl-300 max-w-xl mx-auto leading-relaxed">
-                    لا مزيد من كتابة الأرقام يدوياً وتصحيح الأخطاء. التقط، ارفع، انسخ. هكذا بكل بساطة وسلاسة.
-                </p>
-                <div class="pt-4">
-                    <a href="#scanner" class="inline-flex items-center justify-center px-8 py-4 text-sm font-bold text-pearl-950 bg-white hover:bg-emerald-50 rounded-full transition-all shadow-lg hover:shadow-emerald-500/10">جرب مسح كرتك الآن مجاناً</a>
-                </div>
-            </div>
-        </section>
     </main>
 
     <!-- Deep Corporate Footer -->
-    <footer class="bg-slate-950 text-slate-400 border-t border-white/5 py-16">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-12 pb-12 border-b border-white/5">
-                <!-- Branding Column -->
-                <div class="md:col-span-4 space-y-4">
-                    <a href="#" class="flex items-center gap-3 group" aria-label="ocr.very.ly Home">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-lime-500 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                            </svg>
-                        </div>
-                        <span class="text-xl font-extrabold text-white font-sans">ocr.<span class="text-emerald-400">very</span>.ly</span>
-                    </a>
-                    <p class="text-xs text-slate-400 leading-relaxed">
-                        المنصة الرائدة محلياً لقراءة بطاقات الشحن الورقية بدقة متناهية وبخصوصية تامة 100% دون خوادم وسيطة.
-                    </p>
-                </div>
-
-                <!-- Links Columns -->
-                <div class="md:col-span-2 space-y-3">
-                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">المنتج</h5>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#scanner" class="hover:text-white transition-colors">ماسح الكروت</a></li>
-                        <li><a href="#how-it-works" class="hover:text-white transition-colors">آلية العمل</a></li>
-                        <li><a href="#supported-networks" class="hover:text-white transition-colors">الشبكات المدعومة</a></li>
-                    </ul>
-                </div>
-
-                <div class="md:col-span-2 space-y-3">
-                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">الخصوصية والأمان</h5>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#" class="hover:text-white transition-colors">سياسة الخصوصية الـمحليّة</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">شروط الاستخدام</a></li>
-                    </ul>
-                </div>
-
-                <div class="md:col-span-4 space-y-4">
-                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">اشترك في التحديثات</h5>
-                    <div class="flex gap-2">
-                        <input type="email" placeholder="بريدك الإلكتروني" aria-label="بريدك الإلكتروني" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 w-full">
-                        <button class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors shrink-0">اشترك</button>
-                    </div>
-                </div>
+    <footer class="bg-pearl-950 border-t border-olive-900/40 text-pearl-400 relative z-20">
+        <div class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-center md:text-right">
+            
+            <!-- Branding & Copyright -->
+            <div class="flex flex-col gap-2 items-center md:items-start">
+                <span class="text-white font-bold text-lg">ocr.very.ly</span>
+                <p class="text-xs text-pearl-500">أداة احترافية مفتوحة المصدر لاستخراج البيانات الرقمية من بطاقات الشحن والفواتير محلياً.</p>
+                <p class="text-[11px] text-pearl-600 font-sans mt-2">&copy; 2024 ocr.very.ly. All rights reserved.</p>
             </div>
 
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-                <p>© <span id="current-year"></span> ocr.very.ly. جميع الحقوق محفوظة.</p>
+            <!-- Security Notice -->
+            <div class="flex flex-col items-center justify-center p-4 rounded-xl bg-olive-950/40 border border-olive-900/40 max-w-sm mx-auto">
+                <svg class="w-5 h-5 text-emerald-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span class="text-xs text-white font-bold">حماية الخصوصية المطلقة</span>
+                <p class="text-[10px] text-center text-pearl-400 mt-1">تتم معالجة الصور بالكامل داخل المتصفح (WebAssembly/JS). نحن لا نتلقى صورك أبداً ولا نملك أي خوادم تتبع.</p>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="flex flex-col gap-3 items-center md:items-end text-xs">
+                <span class="text-white font-bold">مطورين ومصادر</span>
                 <div class="flex gap-4">
-                    <a href="#" aria-label="Twitter Account" class="hover:text-white transition-colors">تويتر</a>
-                    <a href="#" aria-label="GitHub Repository" class="hover:text-white transition-colors">غيت هاب</a>
+                    <a href="https://github.com/cozmo/jsQR" target="_blank" rel="noopener noreferrer" class="hover:text-olive-400 transition-colors">jsQR Library</a>
+                    <span class="text-pearl-700">|</span>
+                    <a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener noreferrer" class="hover:text-olive-400 transition-colors">Tesseract.js</a>
                 </div>
+                <p class="text-[10px] text-pearl-500">تم التطوير بأعلى معايير الـ UI/UX لدعم السرعة والإنتاجية.</p>
             </div>
+
         </div>
     </footer>
 
-    <!-- JavaScript Advanced Data Extraction & OCR Engine Logic -->
+    <!-- JavaScript Logic System -->
     <script>
-        // Set current year in footer
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-
-        // DOM elements
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
-        const dropzone = document.getElementById('dropzone');
-        const uploadPrompt = document.getElementById('upload-prompt');
-        const processingState = document.getElementById('processing-state');
-        const statusStep = document.getElementById('status-step');
-        const statusPercentage = document.getElementById('status-percentage');
-        const processedCanvas = document.getElementById('processed-canvas');
-        const previewWrapper = document.getElementById('preview-wrapper');
-        const voucherResultContainer = document.getElementById('voucher-result-container');
-        const pinOutput = document.getElementById('pin-output');
-        const serialOutput = document.getElementById('serial-output');
-        const rawTextOutput = document.getElementById('raw-text-output');
+        const previewCard = document.getElementById('preview-card');
+        const imagePreview = document.getElementById('image-preview');
+        const processCanvas = document.getElementById('process-canvas');
+        const progressCard = document.getElementById('progress-card');
+        const progressBar = document.getElementById('progress-bar');
+        const progressStatus = document.getElementById('progress-status');
+        const progressPercent = document.getElementById('progress-percent');
+        const btnReset = document.getElementById('btn-reset');
 
-        // Drag and drop event listeners
+        // Outputs & Copy Buttons
+        const outputQr = document.getElementById('output-qr');
+        const outputPin = document.getElementById('output-pin');
+        const outputSerial = document.getElementById('output-serial');
+        const outputRaw = document.getElementById('output-raw');
+
+        const btnCopyQr = document.getElementById('btn-copy-qr');
+        const btnCopyPin = document.getElementById('btn-copy-pin');
+        const btnCopySerial = document.getElementById('btn-copy-serial');
+
+        const badgeQr = document.getElementById('badge-qr');
+        const badgePin = document.getElementById('badge-pin');
+        const badgeSerial = document.getElementById('badge-serial');
+
+        // Drag and Drop Event Listeners
         ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, (e) => {
+            dropZone.addEventListener(eventName, (e) => {
                 e.preventDefault();
-                dropzone.classList.add('border-emerald-500', 'bg-emerald-50/10');
+                e.stopPropagation();
+                dropZone.classList.add('border-olive-400', 'bg-olive-950/50');
             }, false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, (e) => {
+            dropZone.addEventListener(eventName, (e) => {
                 e.preventDefault();
-                dropzone.classList.remove('border-emerald-500', 'bg-emerald-50/10');
+                e.stopPropagation();
+                dropZone.classList.remove('border-olive-400', 'bg-olive-950/50');
             }, false);
         });
 
-        dropzone.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', (e) => {
             const dt = e.dataTransfer;
             const files = dt.files;
-            if (files.length) {
-                handleImageUpload(files[0]);
+            if (files.length > 0) {
+                handleFile(files[0]);
             }
+        });
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
         });
 
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                handleImageUpload(e.target.files[0]);
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
             }
         });
 
-        // Image Pipeline & OCR Trigger
-        function handleImageUpload(file) {
+        btnReset.addEventListener('click', () => {
+            resetInterface();
+        });
+
+        // Reset Interface to Default State
+        function resetInterface() {
+            fileInput.value = '';
+            imagePreview.src = '';
+            previewCard.classList.add('hidden');
+            progressCard.classList.add('hidden');
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            
+            outputQr.value = '';
+            outputPin.value = '';
+            outputSerial.value = '';
+            outputRaw.value = '';
+
+            btnCopyQr.disabled = true;
+            btnCopyPin.disabled = true;
+            btnCopySerial.disabled = true;
+
+            badgeQr.textContent = 'في انتظار الصورة';
+            badgeQr.className = "text-[10px] px-2 py-0.5 rounded bg-stone-900 text-pearl-500 border border-stone-800";
+            badgePin.textContent = 'في انتظار الصورة';
+            badgePin.className = "text-[10px] px-2 py-0.5 rounded bg-stone-900 text-pearl-500 border border-stone-800";
+            badgeSerial.textContent = 'في انتظار الصورة';
+            badgeSerial.className = "text-[10px] px-2 py-0.5 rounded bg-stone-900 text-pearl-500 border border-stone-800";
+        }
+
+        // Main File Handling & Pipeline Orchestration
+        function handleFile(file) {
             if (!file.type.startsWith('image/')) {
-                alert('الرجاء اختيار ملف صورة صالح.');
+                alert('الرجاء اختيار ملف صورة صالح فقط.');
                 return;
             }
 
-            // Show processing UI state
-            uploadPrompt.classList.add('hidden');
-            processingState.classList.remove('hidden');
-            voucherResultContainer.classList.add('hidden', 'opacity-0', 'translate-y-4');
-
-            statusStep.textContent = "جاري تحسين تباين الصورة...";
-            statusPercentage.textContent = "يتم الآن تصفية الألوان لزيادة دقة القراءة";
-
+            resetInterface();
+            
+            // Show preview immediately
             const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    preprocessImage(img);
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                previewCard.classList.remove('hidden');
+                
+                // Initialize processing when image is fully loaded
+                imagePreview.onload = function() {
+                    processImagePipeline(imagePreview);
                 };
-                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // Image Preprocessing on Canvas (Binarization & Contrast Enhancement)
-        function preprocessImage(img) {
-            const ctx = processedCanvas.getContext('2d');
-            
-            // Set canvas size matching the image or constrained max bounds
-            const maxDimension = 1000;
-            let width = img.width;
-            let height = img.height;
-            if (width > maxDimension || height > maxDimension) {
-                if (width > height) {
-                    height = Math.round((height * maxDimension) / width);
-                    width = maxDimension;
-                } else {
-                    width = Math.round((width * maxDimension) / height);
-                    height = maxDimension;
-                }
-            }
-            
-            processedCanvas.width = width;
-            processedCanvas.height = height;
-            
-            // Draw image to canvas
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Get image data for pixel manipulation
-            const imgData = ctx.getImageData(0, 0, width, height);
-            const data = imgData.data;
-            
-            // Grayscale & Thresholding (Binarization)
-            // This isolates the black text from colorful/shadowed backgrounds
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                
-                // Classic luminance formula
-                let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                
-                // Apply a mid-high threshold binarization to force clean black & white
-                // This preserves text strokes while discarding light background noise/shadows
-                const threshold = 120; 
-                const finalVal = gray > threshold ? 255 : 0;
-                
-                data[i] = finalVal;
-                data[i + 1] = finalVal;
-                data[i + 2] = finalVal;
-            }
-            
-            ctx.putImageData(imgData, 0, 0);
-            previewWrapper.classList.remove('hidden');
-            
-            // Proceed to OCR Engine
-            runOCR(processedCanvas);
-        }
+        // Unified Processing Pipeline: QR Decoder & Tesseract OCR
+        async function processImagePipeline(imgElement) {
+            progressCard.classList.remove('hidden');
+            updateProgress(10, 'جاري تحضير الصورة واستخراج البكسلات...');
 
-        // Tesseract.js OCR Execution
-        async function runOCR(canvas) {
-            statusStep.textContent = "جاري تشغيل محرك القراءة البصرية...";
-            statusPercentage.textContent = "قد يستغرق هذا بضع ثوانٍ حسب مواصفات جهازك";
+            // Draw image on canvas for pixel operations
+            const canvas = processCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match image dimensions
+            canvas.width = imgElement.naturalWidth || imgElement.width;
+            canvas.height = imgElement.naturalHeight || imgElement.height;
+            ctx.drawImage(imgElement, 0, 0);
 
+            // --- STEP 1: Local QR Code Decoding with jsQR ---
             try {
-                // Initialize Tesseract worker with English + Arabic detection capabilities
-                const worker = await Tesseract.createWorker('eng+ara', 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const pct = Math.round(m.progress * 100);
-                            statusPercentage.textContent = `جاري مسح النصوص: ${pct}%`;
-                        }
-                    }
+                updateProgress(25, 'جاري فحص وجود رمز QR...');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
                 });
 
-                const ret = await worker.recognize(canvas);
-                const rawText = ret.data.text;
+                if (qrCode && qrCode.data) {
+                    outputQr.value = qrCode.data;
+                    btnCopyQr.disabled = false;
+                    badgeQr.textContent = 'تم الاستخراج بنجاح';
+                    badgeQr.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-900/40 font-bold";
+                } else {
+                    outputQr.value = '';
+                    badgeQr.textContent = 'لم يتم العثور عليه';
+                    badgeQr.className = "text-[10px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-900/40";
+                }
+            } catch (err) {
+                console.error("QR Decoding Error: ", err);
+                badgeQr.textContent = 'فشل الفحص';
+                badgeQr.className = "text-[10px] px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-900/40";
+            }
+
+            // --- STEP 2: OCR Text Extraction with Tesseract.js ---
+            try {
+                updateProgress(40, 'جاري تهيئة محرك الـ OCR لقراءة النصوص...');
                 
-                await worker.terminate();
+                // Recognize text using English and Arabic languages simultaneously
+                const result = await Tesseract.recognize(
+                    canvas,
+                    'eng+ara',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const progress = 40 + Math.round(m.progress * 50); // Map 0-1 to 40-90%
+                                updateProgress(progress, `جاري قراءة وتحليل نصوص الفاتورة... (${Math.round(m.progress * 100)}%)`);
+                            }
+                        }
+                    }
+                );
 
-                // Parse the text to extract PIN and Serial
-                extractVoucherData(rawText);
+                const extractedText = result.data.text || '';
+                outputRaw.value = extractedText;
 
-            } catch (error) {
-                console.error("OCR Error: ", error);
-                statusStep.textContent = "حدث خطأ أثناء معالجة الصورة";
-                statusPercentage.textContent = "تأكد من اختيار صورة واضحة ومحاولة مجدداً.";
-                setTimeout(resetScanner, 4000);
+                updateProgress(95, 'جاري تصفية وتحليل الرموز المستخرجة ذكياً...');
+                parseVoucherDetails(extractedText);
+                updateProgress(100, 'اكتملت عملية التحليل بنجاح!');
+                
+                // Hide progress card after a short delay
+                setTimeout(() => {
+                    progressCard.classList.add('hidden');
+                }, 2000);
+
+            } catch (err) {
+                console.error("OCR Error: ", err);
+                updateProgress(100, 'حدث خطأ أثناء معالجة النصوص.');
+                badgePin.textContent = 'فشل المعالجة';
+                badgePin.className = "text-[10px] px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-900/40";
+                badgeSerial.textContent = 'فشل المعالجة';
+                badgeSerial.className = "text-[10px] px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-900/40";
+                
+                setTimeout(() => {
+                    progressCard.classList.add('hidden');
+                }, 3000);
             }
         }
 
-        // Advanced Regex Data Extraction logic
-        function extractVoucherData(text) {
-            statusStep.textContent = "جاري تصفية وفرز البيانات...";
-            statusPercentage.textContent = "التعرف على الأنماط الرقمية وعزلها";
+        // Helper to update progress state visually
+        function updateProgress(percent, statusText) {
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+            if (statusText) {
+                progressStatus.textContent = statusText;
+            }
+        }
 
-            // Clean raw text display for debugging
-            rawTextOutput.textContent = text || "لم يتم العثور على أي نصوص مقروءة.";
+        // Smart Parser: Extract PIN and Serial Number using regular expressions
+        function parseVoucherDetails(text) {
+            // Clean text of non-standard symbols but preserve spaces and lines
+            const normalizedText = text.replace(/[^\w\s\u0600-\u06FF-]/g, ' ');
 
-            // Normalize spacing/newlines to make regex matching robust
-            const normalizedText = text.replace(/\r?\n|\r/g, ' ');
+            // Find all contiguous digit sequences (which may include spaces/dashes)
+            // Telecom PINs are typically 12 to 16 digits (e.g. Sawa 14, Mobily 15, Zain 16)
+            // Serials are typically 10 to 19 digits.
+            const lines = text.split('\n');
+            let potentialPin = "";
+            let potentialSerial = "";
 
-            // 1. PIN-CODE Extraction
-            // Looking for sequences that contain between 12 and 16 digits (can be spaced or dashed)
-            // e.g. "4829 1049 3829 10" or "4829-1049-3829-10" or "12345678901234"
-            // We use a regex matching sequences of digits and spacing that total 12-16 numeric characters
-            const pinRegex = /\b(?:\d[\s-]*){12,16}\b/g;
-            const pinMatches = normalizedText.match(pinRegex) || [];
-            
-            let finalPin = "غير متوفر";
-            if (pinMatches.length > 0) {
-                // Clean non-numeric characters from the matches to verify clean length
-                const candidates = pinMatches.map(m => m.replace(/[\s-]/g, ''));
-                // Take the first candidate that meets telecom PIN standards (usually 14-16 digits)
-                const perfectCandidate = candidates.find(c => c.length >= 12 && c.length <= 16);
-                if (perfectCandidate) {
-                    // Format with spaces for high readability
-                    finalPin = perfectCandidate.replace(/(\d{4})(?=\d)/g, '$1 ');
+            // Strategy A: Scan line by line for explicit labels (Arabic / English)
+            for (let line of lines) {
+                const lowerLine = line.toLowerCase();
+                // Check if line contains serial keywords
+                if (lowerLine.includes('serial') || lowerLine.includes('s/n') || lowerLine.includes('sn') || lowerLine.includes('تسلسل') || lowerLine.includes('الرقم التسلسلي') || lowerLine.includes('سيريال')) {
+                    // Extract the longest number sequence in this line
+                    const digits = line.replace(/[^0-9]/g, '');
+                    if (digits.length >= 8 && digits.length <= 22) {
+                        potentialSerial = digits;
+                    }
+                }
+                // Check if line contains PIN keywords
+                if (lowerLine.includes('pin') || lowerLine.includes('كود') || lowerLine.includes('الرقم السري') || lowerLine.includes('شحن') || lowerLine.includes('تعبئة')) {
+                    const digits = line.replace(/[^0-9]/g, '');
+                    if (digits.length >= 12 && digits.length <= 16) {
+                        potentialPin = digits;
+                    }
                 }
             }
 
-            // 2. Serial Number Extraction
-            // Scan for labels like "S/N", "SN", "Serial", "الرقم التسلسلي" followed by digits, 
-            // OR look for standalone 10-14 digit sequences (often starting with "100" or similar)
-            const serialLabelRegex = /(?:S\/N|SN|Serial|الرقم التسلسلي|No|No\.)\s*[:#-]?\s*(\d{10,16})/i;
-            const serialLabelMatch = normalizedText.match(serialLabelRegex);
-            
-            let finalSerial = "غير متوفر";
-            if (serialLabelMatch && serialLabelMatch[1]) {
-                finalSerial = serialLabelMatch[1];
-            } else {
-                // Fallback: look for standalone 10-14 digit sequences that are NOT the PIN code
-                const standaloneRegex = /\b\d{10,14}\b/g;
-                const standaloneMatches = normalizedText.match(standaloneRegex) || [];
-                const pinCleaned = finalPin.replace(/\s/g, '');
-                
-                const serialCandidate = standaloneMatches.find(m => m !== pinCleaned);
+            // Strategy B: Global search if line scanning didn't yield both
+            const allDigitBlocks = text.match(/(?:\d[\s-]*){10,22}/g) || [];
+            const cleanBlocks = allDigitBlocks.map(block => block.replace(/[\s-]/g, '')).filter(block => block.length >= 10);
+
+            // If we still need a PIN: look for a block with length exactly 12 to 16 digits
+            if (!potentialPin) {
+                // Often the PIN is 14, 15, or 16 digits. Let's look for these first.
+                const pinCandidate = cleanBlocks.find(block => block.length >= 12 && block.length <= 16);
+                if (pinCandidate) {
+                    potentialPin = pinCandidate;
+                }
+            }
+
+            // If we still need a Serial: look for a block that is different from PIN
+            if (!potentialSerial) {
+                const serialCandidate = cleanBlocks.find(block => block !== potentialPin && block.length >= 10);
                 if (serialCandidate) {
-                    finalSerial = serialCandidate;
+                    potentialSerial = serialCandidate;
                 }
             }
 
-            // Inject into digital voucher card inputs
-            pinOutput.value = finalPin;
-            serialOutput.value = finalSerial;
+            // If we still have nothing, fallback to first and second clean blocks
+            if (!potentialPin && cleanBlocks.length > 0) {
+                potentialPin = cleanBlocks[0];
+            }
+            if (!potentialSerial && cleanBlocks.length > 1) {
+                potentialSerial = cleanBlocks[1];
+            }
 
-            // Animate card display
-            processingState.classList.add('hidden');
-            voucherResultContainer.classList.remove('hidden');
-            
-            // Smooth entrance animation
-            setTimeout(() => {
-                voucherResultContainer.classList.remove('opacity-0', 'translate-y-4');
-            }, 50);
+            // Output PIN Result
+            if (potentialPin) {
+                outputPin.value = potentialPin;
+                btnCopyPin.disabled = false;
+                badgePin.textContent = 'تم الاستخراج بنجاح';
+                badgePin.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-900/40 font-bold";
+            } else {
+                outputPin.value = '';
+                badgePin.textContent = 'لم يتم العثور عليه';
+                badgePin.className = "text-[10px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-900/40";
+            }
+
+            // Output Serial Result
+            if (potentialSerial) {
+                outputSerial.value = potentialSerial;
+                btnCopySerial.disabled = false;
+                badgeSerial.textContent = 'تم الاستخراج بنجاح';
+                badgeSerial.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-900/40 font-bold";
+            } else {
+                outputSerial.value = '';
+                badgeSerial.textContent = 'لم يتم العثور عليه';
+                badgeSerial.className = "text-[10px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-900/40";
+            }
         }
 
         // Copy to Clipboard Utility with visual feedback
         function copyToClipboard(inputId, buttonId) {
-            const inputEl = document.getElementById(inputId);
-            const btnEl = document.getElementById(buttonId);
+            const inputElement = document.getElementById(inputId);
+            const buttonElement = document.getElementById(buttonId);
             
-            if (inputEl.value === "غير متوفر" || inputEl.value.includes("----")) {
-                alert("لا يوجد رمز صالح لنسخه.");
-                return;
-            }
+            if (!inputElement || !inputElement.value) return;
 
-            inputEl.select();
-            inputEl.setSelectionRange(0, 99999); // For mobile devices
-            navigator.clipboard.writeText(inputEl.value).then(() => {
-                // Keep original icon
-                const originalSVG = btnEl.innerHTML;
+            navigator.clipboard.writeText(inputElement.value).then(() => {
+                // Save original SVG icon
+                const originalSVG = buttonElement.innerHTML;
                 
-                // Change to checkmark icon
-                btnEl.innerHTML = `
-                    <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                // Set temporary success state
+                buttonElement.innerHTML = `
+                    <svg class="w-4 h-4 text-emerald-400 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                     </svg>
                 `;
-                btnEl.classList.add('bg-emerald-800/80');
+                buttonElement.classList.add('bg-emerald-950/80', 'border', 'border-emerald-500/30');
 
-                // Revert after 2 seconds
+                // Revert to original state after 2 seconds
                 setTimeout(() => {
-                    btnEl.innerHTML = originalSVG;
-                    btnEl.classList.remove('bg-emerald-800/80');
+                    buttonElement.innerHTML = originalSVG;
+                    buttonElement.classList.remove('bg-emerald-950/80', 'border', 'border-emerald-500/30');
                 }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
             });
-        }
-
-        // Reset Scanner State
-        function resetScanner() {
-            fileInput.value = "";
-            previewWrapper.classList.add('hidden');
-            voucherResultContainer.classList.add('hidden', 'opacity-0', 'translate-y-4');
-            processingState.classList.add('hidden');
-            uploadPrompt.classList.remove('hidden');
         }
     </script>
 </body>
